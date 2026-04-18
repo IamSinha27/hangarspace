@@ -1,34 +1,60 @@
-import { useCallback, useEffect, useRef } from 'react'
-import { Canvas } from '@react-three/fiber'
+import { useCallback, useEffect, useRef, useMemo } from 'react'
+import * as THREE from 'three'
+import { Canvas, useThree } from '@react-three/fiber'
 import { OrbitControls } from '@react-three/drei'
 import Hangar from './Hangar'
 import Aircraft from './Aircraft'
-import FloorPlane from './FloorPlane'
 import { useStore } from '../store/useStore'
+
+const _dragPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0)
+const _dragTarget = new THREE.Vector3()
 
 function Scene() {
   const placedAircraft = useStore(s => s.placedAircraft)
   const selected = useStore(s => s.selected)
   const dragging = useStore(s => s.dragging)
+  const locked = useStore(s => s.locked)
   const moveAircraft = useStore(s => s.moveAircraft)
   const rotateAircraft = useStore(s => s.rotateAircraft)
   const removeAircraft = useStore(s => s.removeAircraft)
   const copyAircraft = useStore(s => s.copyAircraft)
   const pasteAircraft = useStore(s => s.pasteAircraft)
   const setDragging = useStore(s => s.setDragging)
-  const locked = useStore(s => s.locked)
 
+  const { camera, raycaster, gl } = useThree()
   const dragOffset = useRef({ x: 0, z: 0 })
 
-  const handleMove = useCallback((x, z) => {
-    if (selected) moveAircraft(selected, x - dragOffset.current.x, z - dragOffset.current.z)
-  }, [selected, moveAircraft])
+  // Canvas-level drag: intersect mouse ray with Y=0 plane directly.
+  // This bypasses all Three.js geometry raycasting, fixing jitter at any
+  // camera angle (especially top-down, where aircraft meshes blocked the floor).
+  useEffect(() => {
+    if (!dragging) return
 
-  const handleUp = useCallback(() => {
-    setDragging(false)
-  }, [setDragging])
+    const canvas = gl.domElement
 
-  // Keyboard shortcuts for selected aircraft
+    const onMove = (e) => {
+      const sel = useStore.getState().selected
+      if (!sel) return
+      const rect = canvas.getBoundingClientRect()
+      const ndcX = ((e.clientX - rect.left) / rect.width) * 2 - 1
+      const ndcY = -((e.clientY - rect.top) / rect.height) * 2 + 1
+      raycaster.setFromCamera({ x: ndcX, y: ndcY }, camera)
+      if (raycaster.ray.intersectPlane(_dragPlane, _dragTarget)) {
+        moveAircraft(sel, _dragTarget.x - dragOffset.current.x, _dragTarget.z - dragOffset.current.z)
+      }
+    }
+
+    const onUp = () => setDragging(false)
+
+    canvas.addEventListener('pointermove', onMove)
+    canvas.addEventListener('pointerup', onUp)
+    return () => {
+      canvas.removeEventListener('pointermove', onMove)
+      canvas.removeEventListener('pointerup', onUp)
+    }
+  }, [dragging, camera, raycaster, gl.domElement, moveAircraft, setDragging])
+
+  // Keyboard shortcuts
   useEffect(() => {
     const onKey = (e) => {
       if (locked) return
@@ -55,8 +81,6 @@ function Scene() {
       {placedAircraft.map(a => (
         <Aircraft key={a.uid} aircraft={a} dragOffset={dragOffset} />
       ))}
-
-      <FloorPlane onMove={handleMove} onUp={handleUp} />
 
       <OrbitControls
         enabled={!dragging}

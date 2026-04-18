@@ -6,6 +6,9 @@ import { useStore } from '../store/useStore'
 const M_TO_FT = 3.28084
 function toFt(m) { return (m * M_TO_FT).toFixed(0) }
 
+const _plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0)
+const _target = new THREE.Vector3()
+
 function getColors(uid, selected, collisions, wingCollisions, heightViolations, boundaryViolations) {
   if (collisions.has(uid)) return { body: '#ef4444', wing: '#ef4444', edge: '#ef4444' }
   if (boundaryViolations.has(uid)) return { body: '#a855f7', wing: '#c084fc', edge: '#a855f7' }
@@ -47,21 +50,18 @@ export default function Aircraft({ aircraft, dragOffset }) {
     elevatorSpan = 0,
   } = spec
 
-  // Buffer zone edges geometry (shown always as faint outline)
   const bufferEdges = useMemo(() => {
     return new THREE.EdgesGeometry(
       new THREE.BoxGeometry(length + buffer * 2, tailHeight + buffer, wingspan + buffer * 2)
     )
   }, [length, wingspan, tailHeight, buffer])
 
-  // Wing edges
   const wingEdges = useMemo(() => {
     return new THREE.EdgesGeometry(
       new THREE.BoxGeometry(length * 0.4, wingThickness, wingspan)
     )
   }, [length, wingspan, wingThickness])
 
-  // Fuselage edges
   const fuseEdges = useMemo(() => {
     return new THREE.EdgesGeometry(
       new THREE.BoxGeometry(length, tailHeight, fuselageWidth)
@@ -72,7 +72,13 @@ export default function Aircraft({ aircraft, dragOffset }) {
     if (locked) return
     e.stopPropagation()
     selectAircraft(uid)
-    dragOffset.current = { x: e.point.x - x, z: e.point.z - z }
+    // Intersect the click ray with Y=0 plane for accurate drag offset —
+    // avoids the mesh-surface vs floor discrepancy that causes jitter.
+    if (e.ray.intersectPlane(_plane, _target)) {
+      dragOffset.current = { x: _target.x - x, z: _target.z - z }
+    } else {
+      dragOffset.current = { x: 0, z: 0 }
+    }
     setDragging(true)
   }
 
@@ -90,7 +96,8 @@ export default function Aircraft({ aircraft, dragOffset }) {
           metalness={0.4}
         />
       </mesh>
-      <lineSegments position={[0, tailHeight / 2, 0]} geometry={fuseEdges}>
+      {/* onPointerDown on lineSegments prevents onPointerMissed firing when edges are clicked */}
+      <lineSegments position={[0, tailHeight / 2, 0]} geometry={fuseEdges} onPointerDown={onPointerDown}>
         <lineBasicMaterial color={colors.body} />
       </lineSegments>
 
@@ -112,6 +119,7 @@ export default function Aircraft({ aircraft, dragOffset }) {
       <lineSegments
         position={[0, wingRootHeight + wingThickness / 2, 0]}
         geometry={wingEdges}
+        onPointerDown={onPointerDown}
       >
         <lineBasicMaterial color={colors.wing} />
       </lineSegments>
@@ -124,7 +132,7 @@ export default function Aircraft({ aircraft, dragOffset }) {
 
       {/* === TAIL — horizontal stabilizer left === */}
       {elevatorSpan > 0 && (
-        <mesh position={[-length * 0.41, tailHeight * 0.62, -(fuselageWidth * 0.5 + elevatorSpan * 0.25)]}>
+        <mesh position={[-length * 0.41, tailHeight * 0.62, -(fuselageWidth * 0.5 + elevatorSpan * 0.25)]} onPointerDown={onPointerDown}>
           <boxGeometry args={[length * 0.14, Math.max(wingThickness, 0.15), elevatorSpan * 0.5]} />
           <meshStandardMaterial color={colors.wing} opacity={0.9} transparent />
         </mesh>
@@ -132,7 +140,7 @@ export default function Aircraft({ aircraft, dragOffset }) {
 
       {/* === TAIL — horizontal stabilizer right === */}
       {elevatorSpan > 0 && (
-        <mesh position={[-length * 0.41, tailHeight * 0.62,  (fuselageWidth * 0.5 + elevatorSpan * 0.25)]}>
+        <mesh position={[-length * 0.41, tailHeight * 0.62,  (fuselageWidth * 0.5 + elevatorSpan * 0.25)]} onPointerDown={onPointerDown}>
           <boxGeometry args={[length * 0.14, Math.max(wingThickness, 0.15), elevatorSpan * 0.5]} />
           <meshStandardMaterial color={colors.wing} opacity={0.9} transparent />
         </mesh>
@@ -142,6 +150,7 @@ export default function Aircraft({ aircraft, dragOffset }) {
       <lineSegments
         position={[0, (tailHeight + buffer) / 2, 0]}
         geometry={bufferEdges}
+        onPointerDown={onPointerDown}
       >
         <lineBasicMaterial
           color={hasAnyIssue ? '#ef4444' : hasWingCollision ? '#f59e0b' : '#334155'}
@@ -152,7 +161,7 @@ export default function Aircraft({ aircraft, dragOffset }) {
 
       {/* === BUFFER FILL (only when selected) === */}
       {isSelected && (
-        <mesh position={[0, (tailHeight + buffer) / 2, 0]}>
+        <mesh position={[0, (tailHeight + buffer) / 2, 0]} onPointerDown={onPointerDown}>
           <boxGeometry args={[length + buffer * 2, tailHeight + buffer, wingspan + buffer * 2]} />
           <meshStandardMaterial color="#60a5fa" opacity={0.05} transparent />
         </mesh>
@@ -200,10 +209,6 @@ export default function Aircraft({ aircraft, dragOffset }) {
           </div>
         </Html>
       )}
-
-      {/* === 3D MODEL STUB (Phase 3) ===
-      {spec.modelUrl && <GLBModel url={spec.modelUrl} spec={spec} />}
-      */}
     </group>
   )
 }

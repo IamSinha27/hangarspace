@@ -167,6 +167,30 @@ export default function Aircraft({ aircraft, dragOffset }) {
         </mesh>
       )}
 
+      {/* === AMBIENT LABEL (always visible, hidden when selected) === */}
+      {!isSelected && (
+        <Html
+          position={[0, tailHeight + 0.4, 0]}
+          center
+          distanceFactor={28}
+          style={{ pointerEvents: 'none' }}
+        >
+          <div style={{
+            color: hasCollision ? '#f87171' : hasBoundaryViolation ? '#c084fc' : hasHeightViolation ? '#fb923c' : '#f1f5f9',
+            fontSize: 10,
+            fontWeight: 700,
+            fontFamily: 'system-ui, sans-serif',
+            whiteSpace: 'nowrap',
+            opacity: 0.9,
+            letterSpacing: '0.04em',
+            userSelect: 'none',
+            textShadow: '0 1px 3px rgba(0,0,0,0.8)',
+          }}>
+            {spec.name}
+          </div>
+        </Html>
+      )}
+
       {/* === LABEL (when selected) === */}
       {isSelected && (
         <Html

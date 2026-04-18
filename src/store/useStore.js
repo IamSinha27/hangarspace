@@ -39,9 +39,13 @@ export const useStore = create((set, get) => ({
   dragging: false,
   locked: false,
   doorWall: 'south', // 'north' | 'south' | 'east' | 'west'
+  layoutSaveMsg: null,
+  configSaveMsg: null,
 
   setHangarName: (hangarName) => set({ hangarName }),
   setDoorWall: (doorWall) => set({ doorWall }),
+  setLayoutSaveMsg: (msg) => set({ layoutSaveMsg: msg }),
+  setConfigSaveMsg: (msg) => set({ configSaveMsg: msg }),
 
   toggleLocked: () => set(state => ({ locked: !state.locked, selected: null })),
 

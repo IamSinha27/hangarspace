@@ -12,6 +12,8 @@ export default function StatusBar({ onBack }) {
   const dragging = useStore(s => s.dragging)
   const locked = useStore(s => s.locked)
   const toggleLocked = useStore(s => s.toggleLocked)
+  const layoutSaveMsg = useStore(s => s.layoutSaveMsg)
+  const configSaveMsg = useStore(s => s.configSaveMsg)
 
   const hasHardIssues = collisions.size > 0 || heightViolations.size > 0 || boundaryViolations.size > 0
   const hasWingIssues = wingCollisions.size > 0
@@ -73,6 +75,17 @@ export default function StatusBar({ onBack }) {
       <span style={{ marginLeft: 'auto', color: locked ? '#fbbf24' : '#64748b', fontSize: 12 }}>
         {locked ? 'Layout locked — unlock to edit' : 'Click to select \u00b7 Drag to move \u00b7 R to rotate \u00b7 Del to remove'}
       </span>
+
+      {layoutSaveMsg && (
+        <span style={{ color: layoutSaveMsg === 'Unsaved' ? '#f59e0b' : layoutSaveMsg.includes('failed') ? '#ef4444' : '#22c55e', fontSize: 11, fontWeight: 600, flexShrink: 0 }}>
+          ● {layoutSaveMsg}
+        </span>
+      )}
+      {configSaveMsg && (
+        <span style={{ color: configSaveMsg === 'Unsaved' ? '#f59e0b' : configSaveMsg.includes('failed') ? '#ef4444' : '#22c55e', fontSize: 11, fontWeight: 600, flexShrink: 0 }}>
+          ● {configSaveMsg}
+        </span>
+      )}
 
       <button
         onClick={toggleLocked}

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useStore } from '../store/useStore'
 import AddAircraftModal from './AddAircraftModal'
 import { saveLayout, deleteFleetSpec, updateHangar, deleteHangar } from '../api/hangar'
@@ -33,46 +33,89 @@ export default function Sidebar({ hangarId, onHangarDeleted }) {
   const locked = useStore(s => s.locked)
 
   const setHangarName = useStore(s => s.setHangarName)
+  const setLayoutSaveMsg = useStore(s => s.setLayoutSaveMsg)
+  const setConfigSaveMsg = useStore(s => s.setConfigSaveMsg)
 
   const [showModal, setShowModal] = useState(false)
   const [editSpec, setEditSpec] = useState(null)
-  const [saving, setSaving] = useState(false)
-  const [saveMsg, setSaveMsg] = useState(null)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [confirmDeleteSpec, setConfirmDeleteSpec] = useState(null)
   const [editingName, setEditingName] = useState(false)
   const [nameInput, setNameInput] = useState('')
+  const [collapsed, setCollapsed] = useState(false)
 
-  async function handleSave() {
+  const layoutMounted = useRef(false)
+  const configMounted = useRef(false)
+  const layoutTimer = useRef(null)
+  const configTimer = useRef(null)
+
+  // Auto-save layout when aircraft change (3s debounce)
+  useEffect(() => {
+    if (!layoutMounted.current) { layoutMounted.current = true; return }
     if (!hangarId) return
-    setSaving(true)
-    setSaveMsg(null)
-    try {
-      await Promise.all([
-        saveLayout(hangarId, placedAircraft),
-        updateHangar(hangarId, { ...hangar, name: hangarName }, roof, buffer, doorWall),
-      ])
-      setSaveMsg('Saved')
-    } catch {
-      setSaveMsg('Save failed')
-    } finally {
-      setSaving(false)
-      setTimeout(() => setSaveMsg(null), 2000)
-    }
-  }
+    clearTimeout(layoutTimer.current)
+    setLayoutSaveMsg('Unsaved')
+    layoutTimer.current = setTimeout(async () => {
+      try {
+        await saveLayout(hangarId, placedAircraft)
+        setLayoutSaveMsg('Layout saved')
+      } catch {
+        setLayoutSaveMsg('Save failed')
+      } finally {
+        setTimeout(() => setLayoutSaveMsg(null), 2000)
+      }
+    }, 3000)
+  }, [placedAircraft])
+
+  // Auto-save config when hangar settings change (3s debounce)
+  useEffect(() => {
+    if (!configMounted.current) { configMounted.current = true; return }
+    if (!hangarId) return
+    clearTimeout(configTimer.current)
+    setConfigSaveMsg('Unsaved')
+    configTimer.current = setTimeout(async () => {
+      try {
+        await updateHangar(hangarId, { ...hangar, name: hangarName }, roof, buffer, doorWall)
+        setConfigSaveMsg('Settings saved')
+      } catch {
+        setConfigSaveMsg('Save failed')
+      } finally {
+        setTimeout(() => setConfigSaveMsg(null), 2000)
+      }
+    }, 3000)
+  }, [hangar, roof, buffer, doorWall, hangarName])
 
   return (
     <div style={{
-      width: 260,
+      width: collapsed ? 36 : 260,
+      minWidth: collapsed ? 36 : 260,
       background: '#0f172a',
       borderRight: '1px solid #1e3a5f',
       display: 'flex',
       flexDirection: 'column',
-      overflowY: 'auto',
+      overflowY: collapsed ? 'hidden' : 'auto',
       flexShrink: 0,
+      transition: 'width 0.2s ease, min-width 0.2s ease',
+      position: 'relative',
     }}>
-      {/* Header */}
-      <div style={{ padding: '16px', borderBottom: '1px solid #1e293b' }}>
+      {/* Collapse toggle */}
+      <button
+        onClick={() => setCollapsed(c => !c)}
+        title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        style={{
+          position: 'absolute', top: 12, right: collapsed ? 6 : 8, zIndex: 10,
+          background: '#1e293b', border: '1px solid #334155', borderRadius: 5,
+          color: '#475569', cursor: 'pointer', fontSize: 11, padding: '3px 5px',
+          lineHeight: 1, flexShrink: 0,
+        }}
+        onMouseEnter={e => { e.currentTarget.style.color = '#e2e8f0'; e.currentTarget.style.borderColor = '#475569' }}
+        onMouseLeave={e => { e.currentTarget.style.color = '#475569'; e.currentTarget.style.borderColor = '#334155' }}
+      >
+        {collapsed ? '›' : '‹'}
+      </button>
+
+      {collapsed && <div style={{ flex: 1 }} />}
+      {!collapsed && <><div style={{ padding: '16px', borderBottom: '1px solid #1e293b' }}>
         <div style={{ color: '#475569', fontSize: 10, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 }}>Hangar</div>
         {editingName ? (
           <input
@@ -333,16 +376,7 @@ export default function Sidebar({ hangarId, onHangarDeleted }) {
       </div>
 
       {/* Footer */}
-      <div style={{ padding: '10px 16px', borderTop: '1px solid #1e293b', display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <button
-            onClick={handleSave} disabled={saving || !hangarId}
-            style={{ flex: 1, background: '#3b82f6', border: 'none', borderRadius: 6, color: '#fff', padding: '8px', fontSize: 13, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1 }}
-          >
-            {saving ? 'Saving...' : 'Save Layout'}
-          </button>
-          {saveMsg && <span style={{ color: saveMsg === 'Saved' ? '#22c55e' : '#ef4444', fontSize: 12 }}>{saveMsg}</span>}
-        </div>
+      <div style={{ padding: '10px 16px', borderTop: '1px solid #1e293b', display: 'flex', flexDirection: 'column', gap: 6 }}>
         <button
           onClick={() => setConfirmDelete(true)}
           style={{ width: '100%', background: 'none', border: '1px solid #334155', borderRadius: 6, color: '#64748b', padding: '7px', fontSize: 12, cursor: 'pointer' }}
@@ -352,6 +386,8 @@ export default function Sidebar({ hangarId, onHangarDeleted }) {
           Delete Hangar
         </button>
       </div>
+
+      </> }
 
       {confirmDelete && (
         <ConfirmDialog

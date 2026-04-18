@@ -48,6 +48,13 @@ async def test_create_hangar(auth_client):
     assert "id" in data
 
 
+async def test_create_hangar_door_wall_defaults_to_south(auth_client):
+    client, headers = auth_client
+    res = await client.post("/hangars", json=HANGAR, headers=headers)
+    assert res.status_code == 201
+    assert res.json()["door_wall"] == "south"
+
+
 async def test_get_hangar(auth_client):
     client, headers = auth_client
     created = await _add_hangar(client, headers)
@@ -56,6 +63,15 @@ async def test_get_hangar(auth_client):
     data = res.json()
     assert data["name"] == "North Hangar"
     assert "placed_aircraft" in data
+    assert data["door_wall"] == "south"
+
+
+async def test_update_hangar_door_wall(auth_client):
+    client, headers = auth_client
+    created = await _add_hangar(client, headers)
+    res = await client.patch(f"/hangars/{created['id']}", json={"door_wall": "north"}, headers=headers)
+    assert res.status_code == 200
+    assert res.json()["door_wall"] == "north"
 
 
 async def test_get_hangar_not_found(auth_client):

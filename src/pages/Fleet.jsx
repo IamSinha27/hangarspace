@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { fetchFleet, deleteFleetSpec, updateFleetSpec, addFleetSpec, clearFleet } from '../api/hangar'
+import { fetchFleet, deleteFleetSpec, updateFleetSpec, addFleetSpec, clearFleet, fetchMe } from '../api/hangar'
 import { useStore } from '../store/useStore'
 import AddAircraftModal from '../ui/AddAircraftModal'
 import ConfirmDialog from '../ui/ConfirmDialog'
@@ -11,6 +11,7 @@ const toFt = m => (m * M_TO_FT).toFixed(1)
 export default function Fleet() {
   const navigate = useNavigate()
   const [specs, setSpecs] = useState([])
+  const [orgName, setOrgName] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [showAdd, setShowAdd] = useState(false)
@@ -21,8 +22,8 @@ export default function Fleet() {
   const initFleet = useStore(s => s.initFleet)
 
   useEffect(() => {
-    fetchFleet()
-      .then(s => { setSpecs(s); initFleet(s) })
+    Promise.all([fetchFleet(), fetchMe()])
+      .then(([s, me]) => { setSpecs(s); initFleet(s); setOrgName(me.org_name) })
       .catch(e => setError(e.message))
       .finally(() => setLoading(false))
   }, [])
@@ -85,8 +86,7 @@ export default function Fleet() {
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 40 }}>
           <div>
-            <div style={{ color: '#94a3b8', fontSize: 13, marginBottom: 6, textTransform: 'uppercase', letterSpacing: 1 }}>Organization</div>
-            <h1 style={{ margin: 0, fontSize: 30, fontWeight: 700, color: '#f1f5f9', letterSpacing: '-0.5px' }}>Aircraft Fleet</h1>
+            <h1 style={{ margin: 0, fontSize: 30, fontWeight: 700, color: '#f1f5f9', letterSpacing: '-0.5px' }}>{orgName ? `${orgName}'s Aircraft Fleet` : 'Aircraft Fleet'}</h1>
             <p style={{ margin: '8px 0 0', color: '#64748b', fontSize: 14 }}>
               {specs.length > 0 ? `${specs.length} aircraft type${specs.length !== 1 ? 's' : ''} in your fleet` : 'No aircraft added yet'}
             </p>

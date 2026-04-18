@@ -19,6 +19,7 @@ function Scene() {
   const removeAircraft = useStore(s => s.removeAircraft)
   const copyAircraft = useStore(s => s.copyAircraft)
   const pasteAircraft = useStore(s => s.pasteAircraft)
+  const selectAircraft = useStore(s => s.selectAircraft)
   const setDragging = useStore(s => s.setDragging)
 
   const { camera, raycaster, gl } = useThree()
@@ -61,13 +62,14 @@ function Scene() {
       const cmd = e.metaKey || e.ctrlKey
       if (cmd && e.key === 'c' && selected) { copyAircraft(selected); return }
       if (cmd && e.key === 'v') { pasteAircraft(); return }
+      if (e.key === 'Escape') { selectAircraft(null); return }
       if (!selected) return
       if (e.key === 'r' || e.key === 'R') rotateAircraft(selected)
       if (e.key === 'Delete' || e.key === 'Backspace') removeAircraft(selected)
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [selected, locked, rotateAircraft, removeAircraft, copyAircraft, pasteAircraft])
+  }, [selected, locked, rotateAircraft, removeAircraft, copyAircraft, pasteAircraft, selectAircraft])
 
   return (
     <>

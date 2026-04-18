@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm create:*)",
+      "Bash(cp:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run:*)",
+      "Bash(node:*)",
+      "Bash(grep -r \"export.*Grid\" node_modules/@react-three/drei/core/Grid*)",
+      "Bash(pkill -f \"vite\")",
+      "Bash(pkill -f vite)",
+      "Bash(curl -s http://localhost:5173)",
+      "Bash(npm test:*)",
+      "Bash(python3:*)",
+      "Bash(pip3 install:*)",
+      "Bash(vercel:*)"
+    ]
+  }
+}

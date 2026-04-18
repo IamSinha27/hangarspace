@@ -1,0 +1,57 @@
+[
+  {
+    "id": "c172",
+    "name": "Cessna 172",
+    "length": 8.28,
+    "wingspan": 11.0,
+    "tailHeight": 2.72,
+    "fuselageWidth": 1.1,
+    "wingRootHeight": 0.9,
+    "wingThickness": 0.25,
+    "wingType": "high"
+  },
+  {
+    "id": "pa28",
+    "name": "Piper Cherokee",
+    "length": 7.16,
+    "wingspan": 9.14,
+    "tailHeight": 2.26,
+    "fuselageWidth": 1.2,
+    "wingRootHeight": 0.0,
+    "wingThickness": 0.22,
+    "wingType": "low"
+  },
+  {
+    "id": "be36",
+    "name": "Beechcraft Bonanza",
+    "length": 8.38,
+    "wingspan": 10.21,
+    "tailHeight": 2.59,
+    "fuselageWidth": 1.1,
+    "wingRootHeight": 0.0,
+    "wingThickness": 0.22,
+    "wingType": "low"
+  },
+  {
+    "id": "pc12",
+    "name": "Pilatus PC-12",
+    "length": 14.4,
+    "wingspan": 16.28,
+    "tailHeight": 4.26,
+    "fuselageWidth": 1.6,
+    "wingRootHeight": 0.8,
+    "wingThickness": 0.35,
+    "wingType": "high"
+  },
+  {
+    "id": "c208",
+    "name": "Cessna Caravan",
+    "length": 12.67,
+    "wingspan": 15.88,
+    "tailHeight": 4.53,
+    "fuselageWidth": 1.5,
+    "wingRootHeight": 1.0,
+    "wingThickness": 0.30,
+    "wingType": "high"
+  }
+]

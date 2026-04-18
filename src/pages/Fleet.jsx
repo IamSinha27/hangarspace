@@ -184,7 +184,7 @@ export default function Fleet() {
       {confirmDelete && (
         <ConfirmDialog
           title="Remove Aircraft"
-          message={`Remove ${confirmDelete.name} from your fleet? This won't affect already-placed aircraft in existing layouts.`}
+          message={`Remove ${confirmDelete.name} from your fleet? Any placed aircraft of this type will also be removed from all hangar layouts.`}
           confirmLabel="Remove"
           onConfirm={() => handleDelete(confirmDelete.id)}
           onCancel={() => setConfirmDelete(null)}

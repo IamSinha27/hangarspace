@@ -59,7 +59,7 @@ class AircraftSpec(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     org = relationship("Org", back_populates="aircraft_specs")
-    placed = relationship("PlacedAircraft", back_populates="spec")
+    placed = relationship("PlacedAircraft", back_populates="spec", passive_deletes=True)
 
 
 class Hangar(Base):

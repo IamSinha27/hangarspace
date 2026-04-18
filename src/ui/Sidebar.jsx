@@ -37,6 +37,7 @@ export default function Sidebar({ hangarId, onHangarDeleted }) {
   const [saving, setSaving] = useState(false)
   const [saveMsg, setSaveMsg] = useState(null)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [confirmDeleteSpec, setConfirmDeleteSpec] = useState(null)
   const [editingName, setEditingName] = useState(false)
   const [nameInput, setNameInput] = useState('')
 
@@ -195,11 +196,7 @@ export default function Sidebar({ hangarId, onHangarDeleted }) {
                 onMouseLeave={e => { e.currentTarget.style.borderColor = '#334155'; e.currentTarget.style.color = '#475569' }}
               >✎</button>
               <button
-                onClick={async () => {
-                  if (!confirm(`Remove ${spec.name} from fleet?`)) return
-                  await deleteFleetSpec(spec.id)
-                  removeSpec(spec.id)
-                }}
+                onClick={() => setConfirmDeleteSpec(spec)}
                 title="Delete spec"
                 style={{ background: '#1e293b', border: '1px solid #334155', borderRadius: 6, color: '#475569', cursor: 'pointer', fontSize: 14, padding: '0 7px', flexShrink: 0 }}
                 onMouseEnter={e => { e.currentTarget.style.borderColor = '#ef4444'; e.currentTarget.style.color = '#ef4444' }}
@@ -227,6 +224,15 @@ export default function Sidebar({ hangarId, onHangarDeleted }) {
 
       {showModal && <AddAircraftModal onClose={() => setShowModal(false)} />}
       {editSpec && <AddAircraftModal onClose={() => setEditSpec(null)} editSpec={editSpec} />}
+      {confirmDeleteSpec && (
+        <ConfirmDialog
+          title="Remove Aircraft"
+          message={`Remove ${confirmDeleteSpec.name} from fleet? Any placed aircraft of this type will also be removed from all hangar layouts.`}
+          confirmLabel="Remove"
+          onConfirm={async () => { await deleteFleetSpec(confirmDeleteSpec.id); removeSpec(confirmDeleteSpec.id); setConfirmDeleteSpec(null) }}
+          onCancel={() => setConfirmDeleteSpec(null)}
+        />
+      )}
 
       {/* Placed aircraft list */}
       <div style={{ padding: '12px 16px' }}>

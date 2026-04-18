@@ -53,7 +53,11 @@ export const useStore = create((set, get) => ({
 
   addCustomSpec: (spec) => set(state => ({ specs: [...state.specs, spec] })),
 
-  removeSpec: (id) => set(state => ({ specs: state.specs.filter(s => s.id !== id) })),
+  removeSpec: (id) => set(state => {
+    const specs = state.specs.filter(s => s.id !== id)
+    const placed = state.placedAircraft.filter(a => a.specId !== id)
+    return { specs, placedAircraft: placed, ...checkCollisions(placed, state.buffer, specs, state.hangar, state.roof) }
+  }),
 
   // Update an existing spec by id, then recheck collisions
   updateSpec: (id, updated) => set(state => {

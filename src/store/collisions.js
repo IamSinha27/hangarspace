@@ -89,6 +89,7 @@ export function checkCollisions(placedAircraft, buffer, specs, hangar, roof) {
   for (let i = 0; i < placedAircraft.length; i++) {
     const a = placedAircraft[i]
     const sA = specs.find(s => s.id === a.specId)
+    if (!sA) continue
     const rotA = a.rotation || 0
 
     // Height check: tail must clear local ceiling (position-aware) minus buffer
@@ -111,6 +112,7 @@ export function checkCollisions(placedAircraft, buffer, specs, hangar, roof) {
     for (let j = i + 1; j < placedAircraft.length; j++) {
       const b = placedAircraft[j]
       const sB = specs.find(s => s.id === b.specId)
+      if (!sB) continue
       const rotB = b.rotation || 0
 
       // Wing chord half-length matches visual (40% of fuselage length → 20% each side)

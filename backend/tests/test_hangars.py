@@ -148,3 +148,26 @@ async def test_hangar_org_isolation(client):
 async def test_hangars_unauthenticated(client):
     res = await client.get("/hangars")
     assert res.status_code == 401
+
+
+async def test_delete_spec_removes_placed_aircraft(auth_client):
+    """Deleting a fleet spec must cascade-remove it from all hangar layouts."""
+    client, headers = auth_client
+    hangar = await _add_hangar(client, headers)
+    spec = await _add_spec(client, headers)
+
+    # Place the aircraft in the hangar
+    await client.put(f"/hangars/{hangar['id']}/layout", json={
+        "placed_aircraft": [{"spec_id": spec["id"], "x_m": 5.0, "z_m": 3.0, "rotation_rad": 0.0}]
+    }, headers=headers)
+
+    # Confirm it's there
+    loaded = (await client.get(f"/hangars/{hangar['id']}", headers=headers)).json()
+    assert len(loaded["placed_aircraft"]) == 1
+
+    # Delete the spec
+    await client.delete(f"/fleet/{spec['id']}", headers=headers)
+
+    # Placed aircraft must be gone from the layout
+    loaded = (await client.get(f"/hangars/{hangar['id']}", headers=headers)).json()
+    assert len(loaded["placed_aircraft"]) == 0

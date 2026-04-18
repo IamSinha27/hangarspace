@@ -92,8 +92,8 @@ export default function Aircraft({ aircraft, dragOffset }) {
           color={colors.body}
           opacity={isSelected ? 0.95 : 0.8}
           transparent
-          roughness={0.3}
-          metalness={0.4}
+          roughness={0.15}
+          metalness={0.7}
         />
       </mesh>
       {/* onPointerDown on lineSegments prevents onPointerMissed firing when edges are clicked */}
@@ -112,8 +112,8 @@ export default function Aircraft({ aircraft, dragOffset }) {
           color={colors.wing}
           opacity={isSelected ? 0.9 : 0.75}
           transparent
-          roughness={0.3}
-          metalness={0.3}
+          roughness={0.2}
+          metalness={0.6}
         />
       </mesh>
       <lineSegments

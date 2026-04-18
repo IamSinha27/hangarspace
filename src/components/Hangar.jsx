@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import { useMemo } from 'react'
-import { Html } from '@react-three/drei'
+import { Html, Grid } from '@react-three/drei'
 import { useStore } from '../store/useStore'
 
 // Build roof geometry based on profile type
@@ -112,11 +112,26 @@ export default function Hangar() {
 
   return (
     <group>
-      {/* Floor */}
+      {/* Floor base */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
         <planeGeometry args={[length, width]} />
-        <meshStandardMaterial color="#1e293b" />
+        <meshStandardMaterial color="#0f172a" />
       </mesh>
+
+      {/* Floor grid overlay */}
+      <Grid
+        position={[0, 0.01, 0]}
+        args={[length, width]}
+        cellSize={1}
+        cellThickness={0.4}
+        cellColor="#1e3a5f"
+        sectionSize={5}
+        sectionThickness={0.8}
+        sectionColor="#2563eb"
+        fadeDistance={80}
+        fadeStrength={1}
+        infiniteGrid={false}
+      />
 
       {/* Door indicator — green strip along the entrance wall */}
       {(() => {
@@ -153,6 +168,14 @@ export default function Hangar() {
           <lineBasicMaterial color="#3b82f6" opacity={0.5} transparent />
         </lineSegments>
       )}
+
+      {/* Ceiling light strips — emissive fluorescent bars */}
+      {[-0.3, 0, 0.3].map((offset, i) => (
+        <mesh key={i} position={[length * offset, wallHeight - 0.05, 0]} rotation={[Math.PI / 2, 0, 0]}>
+          <planeGeometry args={[length * 0.15, width * 0.04]} />
+          <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={2} toneMapped={false} />
+        </mesh>
+      ))}
 
       {/* Compass labels — N/S/E/W just outside each wall */}
       {[

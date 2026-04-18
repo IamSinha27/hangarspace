@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useMemo } from 'react'
 import * as THREE from 'three'
 import { Canvas, useThree } from '@react-three/fiber'
 import { OrbitControls } from '@react-three/drei'
+import { EffectComposer, Bloom } from '@react-three/postprocessing'
 import Hangar from './Hangar'
 import Aircraft from './Aircraft'
 import { useStore } from '../store/useStore'
@@ -72,9 +73,10 @@ function Scene() {
   return (
     <>
       <color attach="background" args={['#020617']} />
-      <ambientLight intensity={0.6} />
-      <directionalLight position={[20, 30, 20]} intensity={1.2} castShadow />
-      <directionalLight position={[-20, 10, -20]} intensity={0.4} />
+      <ambientLight intensity={0.25} />
+      <hemisphereLight args={['#1e3a5f', '#0f172a', 0.5]} />
+      <spotLight position={[0, 20, 0]} angle={0.6} penumbra={0.5} intensity={2} castShadow shadow-mapSize={[2048, 2048]} />
+      <directionalLight position={[20, 15, 10]} intensity={0.6} />
 
       <Hangar />
 
@@ -88,6 +90,10 @@ function Scene() {
         target={[0, 2, 0]}
         makeDefault
       />
+
+      <EffectComposer>
+        <Bloom luminanceThreshold={0.6} luminanceSmoothing={0.4} intensity={0.4} mipmapBlur />
+      </EffectComposer>
     </>
   )
 }

@@ -19,6 +19,7 @@ export default function Editor() {
   const setHangarName = useStore(s => s.setHangarName)
   const setRoof = useStore(s => s.setRoof)
   const setBuffer = useStore(s => s.setBuffer)
+  const setDoorWall = useStore(s => s.setDoorWall)
   const loadPlaced = useStore(s => s.loadPlaced)
 
   useEffect(() => {
@@ -33,6 +34,7 @@ export default function Editor() {
         setHangar({ length: h.length_m, width: h.width_m, height: h.height_m })
         setRoof({ type: h.roof_type, peakHeight: h.roof_peak_height_m, eaveHeight: h.roof_eave_height_m })
         setBuffer(h.buffer_m)
+        setDoorWall(h.door_wall ?? 'south')
         loadPlaced(h.placed_aircraft)
       } catch (e) {
         setError(e.message)

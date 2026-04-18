@@ -25,6 +25,8 @@ export default function Sidebar({ hangarId, onHangarDeleted }) {
   const setBuffer = useStore(s => s.setBuffer)
   const setRoof = useStore(s => s.setRoof)
   const setHangar = useStore(s => s.setHangar)
+  const doorWall = useStore(s => s.doorWall)
+  const setDoorWall = useStore(s => s.setDoorWall)
   const selectAircraft = useStore(s => s.selectAircraft)
   const removeSpec = useStore(s => s.removeSpec)
   const hangarName = useStore(s => s.hangarName)
@@ -48,7 +50,7 @@ export default function Sidebar({ hangarId, onHangarDeleted }) {
     try {
       await Promise.all([
         saveLayout(hangarId, placedAircraft),
-        updateHangar(hangarId, { ...hangar, name: hangarName }, roof, buffer),
+        updateHangar(hangarId, { ...hangar, name: hangarName }, roof, buffer, doorWall),
       ])
       setSaveMsg('Saved')
     } catch {
@@ -131,6 +133,21 @@ export default function Sidebar({ hangarId, onHangarDeleted }) {
             />
           </div>
         ))}
+      </div>
+
+      {/* Door wall */}
+      <div style={{ padding: '12px 16px', borderBottom: '1px solid #1e293b', flexShrink: 0 }}>
+        <div style={{ color: '#94a3b8', fontSize: 11, marginBottom: 6, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1 }}>Entrance</div>
+        <select
+          value={doorWall}
+          onChange={e => setDoorWall(e.target.value)}
+          style={{ width: '100%', background: '#1e293b', border: '1px solid #334155', borderRadius: 4, color: '#e2e8f0', padding: '5px 8px', fontSize: 12 }}
+        >
+          <option value="south">South wall</option>
+          <option value="north">North wall</option>
+          <option value="east">East wall</option>
+          <option value="west">West wall</option>
+        </select>
       </div>
 
       {/* Roof profile */}

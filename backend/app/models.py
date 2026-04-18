@@ -75,6 +75,7 @@ class Hangar(Base):
     roof_peak_height_m = Column(Float, nullable=False)
     roof_eave_height_m = Column(Float, nullable=False)
     buffer_m = Column(Float, nullable=False, default=0.9144)
+    door_wall = Column(String, nullable=False, server_default='south')
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     org = relationship("Org", back_populates="hangars")

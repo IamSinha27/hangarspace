@@ -82,7 +82,7 @@ export async function fetchHangar(id) {
   return api.get(`/hangars/${id}`)
 }
 
-export async function updateHangar(id, hangar, roof, buffer) {
+export async function updateHangar(id, hangar, roof, buffer, doorWall) {
   return api.patch(`/hangars/${id}`, {
     name: hangar.name,
     length_m: hangar.length,
@@ -92,6 +92,7 @@ export async function updateHangar(id, hangar, roof, buffer) {
     roof_peak_height_m: roof.peakHeight,
     roof_eave_height_m: roof.eaveHeight,
     buffer_m: buffer,
+    door_wall: doorWall,
   })
 }
 

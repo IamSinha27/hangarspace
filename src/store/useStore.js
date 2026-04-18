@@ -38,8 +38,10 @@ export const useStore = create((set, get) => ({
   boundaryViolations: new Set(),
   dragging: false,
   locked: false,
+  doorWall: 'south', // 'north' | 'south' | 'east' | 'west'
 
   setHangarName: (hangarName) => set({ hangarName }),
+  setDoorWall: (doorWall) => set({ doorWall }),
 
   toggleLocked: () => set(state => ({ locked: !state.locked, selected: null })),
 

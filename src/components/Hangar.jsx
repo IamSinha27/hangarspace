@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import { useMemo } from 'react'
+import { Html } from '@react-three/drei'
 import { useStore } from '../store/useStore'
 
 // Build roof geometry based on profile type
@@ -77,9 +78,22 @@ function useRoofGeometry(length, width, peakHeight, eaveHeight, type) {
   }, [length, width, peakHeight, eaveHeight, type])
 }
 
+const DOOR_STRIP = 1.2 // meters wide
+
+function doorStripProps(wall, length, width) {
+  const hL = length / 2, hW = width / 2
+  switch (wall) {
+    case 'north': return { position: [-hL + DOOR_STRIP / 2, 0.01, 0], args: [DOOR_STRIP, width] }
+    case 'east':  return { position: [0, 0.01,  hW - DOOR_STRIP / 2], args: [length, DOOR_STRIP] }
+    case 'west':  return { position: [0, 0.01, -hW + DOOR_STRIP / 2], args: [length, DOOR_STRIP] }
+    default:      return { position: [ hL - DOOR_STRIP / 2, 0.01, 0], args: [DOOR_STRIP, width] } // south
+  }
+}
+
 export default function Hangar() {
   const { length, width } = useStore(s => s.hangar)
   const roof = useStore(s => s.roof)
+  const doorWall = useStore(s => s.doorWall)
 
   const { type, peakHeight, eaveHeight } = roof
   const wallHeight = type === 'flat' ? peakHeight : eaveHeight
@@ -103,6 +117,17 @@ export default function Hangar() {
         <planeGeometry args={[length, width]} />
         <meshStandardMaterial color="#1e293b" />
       </mesh>
+
+      {/* Door indicator — green strip along the entrance wall */}
+      {(() => {
+        const { position, args } = doorStripProps(doorWall, length, width)
+        return (
+          <mesh position={position} rotation={[-Math.PI / 2, 0, 0]}>
+            <planeGeometry args={args} />
+            <meshStandardMaterial color="#22c55e" opacity={0.35} transparent emissive="#22c55e" emissiveIntensity={0.4} />
+          </mesh>
+        )
+      })()}
 
       {/* Walls — transparent fill */}
       <mesh position={[0, wallHeight / 2, 0]}>
@@ -128,6 +153,26 @@ export default function Hangar() {
           <lineBasicMaterial color="#3b82f6" opacity={0.5} transparent />
         </lineSegments>
       )}
+
+      {/* Compass labels — N/S/E/W just outside each wall */}
+      {[
+        { label: 'S', pos: [ length / 2 + 2, 0.5, 0], door: doorWall === 'south' },
+        { label: 'N', pos: [-length / 2 - 2, 0.5, 0], door: doorWall === 'north' },
+        { label: 'E', pos: [0, 0.5,  width / 2 + 2],  door: doorWall === 'east'  },
+        { label: 'W', pos: [0, 0.5, -width / 2 - 2],  door: doorWall === 'west'  },
+      ].map(({ label, pos, door }) => (
+        <Html key={label} position={pos} center style={{ pointerEvents: 'none' }}>
+          <div style={{
+            color: door ? '#22c55e' : '#334155',
+            fontWeight: 700,
+            fontSize: 13,
+            fontFamily: 'monospace',
+            userSelect: 'none',
+          }}>
+            {label}{door ? ' ⬆' : ''}
+          </div>
+        </Html>
+      ))}
     </group>
   )
 }

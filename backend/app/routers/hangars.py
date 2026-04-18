@@ -22,6 +22,7 @@ class HangarCreate(BaseModel):
     roof_peak_height_m: float
     roof_eave_height_m: float
     buffer_m: float = 0.9144
+    door_wall: str = 'south'
 
 
 class HangarUpdate(BaseModel):
@@ -33,6 +34,7 @@ class HangarUpdate(BaseModel):
     roof_peak_height_m: Optional[float] = None
     roof_eave_height_m: Optional[float] = None
     buffer_m: Optional[float] = None
+    door_wall: Optional[str] = None
 
 
 class PlacedAircraftIn(BaseModel):
@@ -98,6 +100,7 @@ async def get_hangar(
         "roof_peak_height_m": hangar.roof_peak_height_m,
         "roof_eave_height_m": hangar.roof_eave_height_m,
         "buffer_m": hangar.buffer_m,
+        "door_wall": hangar.door_wall,
         "layout_id": active_layout.id if active_layout else None,
         "placed_aircraft": [
             {

@@ -13,9 +13,9 @@ function getColors(uid, selected, collisions, wingCollisions, heightViolations, 
   if (collisions.has(uid)) return { body: '#ef4444', wing: '#ef4444', edge: '#ef4444' }
   if (boundaryViolations.has(uid)) return { body: '#a855f7', wing: '#c084fc', edge: '#a855f7' }
   if (heightViolations.has(uid)) return { body: '#f97316', wing: '#f97316', edge: '#f97316' }
-  if (wingCollisions.has(uid)) return { body: '#60a5fa', wing: '#f59e0b', edge: '#f59e0b' }
-  if (selected === uid) return { body: '#facc15', wing: '#fde68a', edge: '#facc15' }
-  return { body: '#60a5fa', wing: '#93c5fd', edge: '#334155' }
+  if (wingCollisions.has(uid)) return { body: '#d1d5db', wing: '#f59e0b', edge: '#f59e0b' }
+  if (selected === uid) return { body: '#f97316', wing: '#fb923c', edge: '#f97316' }
+  return { body: '#d1d5db', wing: '#e5e7eb', edge: '#3d3d3d' }
 }
 
 export default function Aircraft({ aircraft, dragOffset }) {
@@ -182,7 +182,7 @@ export default function Aircraft({ aircraft, dragOffset }) {
             padding: '5px 10px',
             borderRadius: '5px',
             pointerEvents: 'auto',
-            border: `1px solid ${hasCollision ? '#ef4444' : hasWingCollision ? '#f59e0b' : '#3b82f6'}`,
+            border: `1px solid ${hasCollision ? '#ef4444' : hasWingCollision ? '#f59e0b' : '#f97316'}`,
             whiteSpace: 'nowrap',
             lineHeight: 1.6,
           }}>

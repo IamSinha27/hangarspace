@@ -115,7 +115,7 @@ export default function Hangar() {
       {/* Floor base */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
         <planeGeometry args={[length, width]} />
-        <meshStandardMaterial color="#0f172a" />
+        <meshStandardMaterial color="#0a0a0a" />
       </mesh>
 
       {/* Floor grid overlay */}
@@ -124,10 +124,10 @@ export default function Hangar() {
         args={[length, width]}
         cellSize={1}
         cellThickness={0.4}
-        cellColor="#1e3a5f"
+        cellColor="#242424"
         sectionSize={5}
         sectionThickness={0.8}
-        sectionColor="#2563eb"
+        sectionColor="#3d3d3d"
         fadeDistance={80}
         fadeStrength={1}
         infiniteGrid={false}
@@ -147,25 +147,25 @@ export default function Hangar() {
       {/* Walls — transparent fill */}
       <mesh position={[0, wallHeight / 2, 0]}>
         <boxGeometry args={[length, wallHeight, width]} />
-        <meshStandardMaterial color="#1e3a5f" opacity={0.06} transparent side={THREE.BackSide} />
+        <meshStandardMaterial color="#1a1a1a" opacity={0.08} transparent side={THREE.BackSide} />
       </mesh>
 
       {/* Walls — wireframe edges */}
       <lineSegments position={[0, wallHeight / 2, 0]} geometry={wallEdges}>
-        <lineBasicMaterial color="#3b82f6" opacity={0.6} transparent />
+        <lineBasicMaterial color="#555555" opacity={0.7} transparent />
       </lineSegments>
 
       {/* Roof surface — fill */}
       {roofGeo && (
         <mesh geometry={roofGeo} side={THREE.DoubleSide}>
-          <meshStandardMaterial color="#1e3a5f" opacity={0.08} transparent />
+          <meshStandardMaterial color="#1a1a1a" opacity={0.08} transparent />
         </mesh>
       )}
 
       {/* Roof surface — wireframe edges */}
       {roofEdges && (
         <lineSegments geometry={roofEdges}>
-          <lineBasicMaterial color="#3b82f6" opacity={0.5} transparent />
+          <lineBasicMaterial color="#555555" opacity={0.5} transparent />
         </lineSegments>
       )}
 

@@ -68,6 +68,11 @@ export default function Editor() {
         <Sidebar hangarId={hangarId} onHangarDeleted={() => navigate('/dashboard')} />
         <div style={{ flex: 1, position: 'relative' }}>
           <HangarScene />
+          {/* Vignette — purely CSS, zero GPU cost */}
+          <div style={{
+            position: 'absolute', inset: 0, pointerEvents: 'none',
+            background: 'radial-gradient(ellipse at center, transparent 55%, rgba(2,6,23,0.75) 100%)',
+          }} />
         </div>
       </div>
     </div>

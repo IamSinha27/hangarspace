@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import { useMemo } from 'react'
-import { Html } from '@react-three/drei'
+import { Html, Grid } from '@react-three/drei'
 import { useStore } from '../store/useStore'
 
 // Build roof geometry based on profile type
@@ -112,11 +112,26 @@ export default function Hangar() {
 
   return (
     <group>
-      {/* Floor */}
+      {/* Floor base */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
         <planeGeometry args={[length, width]} />
-        <meshStandardMaterial color="#1e293b" />
+        <meshStandardMaterial color="#0a0a0a" />
       </mesh>
+
+      {/* Floor grid overlay */}
+      <Grid
+        position={[0, 0.01, 0]}
+        args={[length, width]}
+        cellSize={1}
+        cellThickness={0.4}
+        cellColor="#242424"
+        sectionSize={5}
+        sectionThickness={0.8}
+        sectionColor="#3d3d3d"
+        fadeDistance={80}
+        fadeStrength={1}
+        infiniteGrid={false}
+      />
 
       {/* Door indicator — green strip along the entrance wall */}
       {(() => {
@@ -132,27 +147,35 @@ export default function Hangar() {
       {/* Walls — transparent fill */}
       <mesh position={[0, wallHeight / 2, 0]}>
         <boxGeometry args={[length, wallHeight, width]} />
-        <meshStandardMaterial color="#1e3a5f" opacity={0.06} transparent side={THREE.BackSide} />
+        <meshStandardMaterial color="#1a1a1a" opacity={0.08} transparent side={THREE.BackSide} />
       </mesh>
 
       {/* Walls — wireframe edges */}
       <lineSegments position={[0, wallHeight / 2, 0]} geometry={wallEdges}>
-        <lineBasicMaterial color="#3b82f6" opacity={0.6} transparent />
+        <lineBasicMaterial color="#555555" opacity={0.7} transparent />
       </lineSegments>
 
       {/* Roof surface — fill */}
       {roofGeo && (
         <mesh geometry={roofGeo} side={THREE.DoubleSide}>
-          <meshStandardMaterial color="#1e3a5f" opacity={0.08} transparent />
+          <meshStandardMaterial color="#1a1a1a" opacity={0.08} transparent />
         </mesh>
       )}
 
       {/* Roof surface — wireframe edges */}
       {roofEdges && (
         <lineSegments geometry={roofEdges}>
-          <lineBasicMaterial color="#3b82f6" opacity={0.5} transparent />
+          <lineBasicMaterial color="#555555" opacity={0.5} transparent />
         </lineSegments>
       )}
+
+      {/* Ceiling light strips — emissive fluorescent bars */}
+      {[-0.3, 0, 0.3].map((offset, i) => (
+        <mesh key={i} position={[length * offset, wallHeight - 0.05, 0]} rotation={[Math.PI / 2, 0, 0]}>
+          <planeGeometry args={[length * 0.15, width * 0.04]} />
+          <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={2} toneMapped={false} />
+        </mesh>
+      ))}
 
       {/* Compass labels — N/S/E/W just outside each wall */}
       {[

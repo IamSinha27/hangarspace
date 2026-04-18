@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useMemo } from 'react'
 import * as THREE from 'three'
 import { Canvas, useThree } from '@react-three/fiber'
-import { OrbitControls } from '@react-three/drei'
+import { OrbitControls, Environment, ContactShadows } from '@react-three/drei'
 import Hangar from './Hangar'
 import Aircraft from './Aircraft'
 import { useStore } from '../store/useStore'
@@ -71,12 +71,28 @@ function Scene() {
 
   return (
     <>
-      <color attach="background" args={['#020617']} />
-      <ambientLight intensity={0.6} />
-      <directionalLight position={[20, 30, 20]} intensity={1.2} castShadow />
-      <directionalLight position={[-20, 10, -20]} intensity={0.4} />
+      <color attach="background" args={['#0e0e0e']} />
+      <fog attach="fog" args={['#0e0e0e', 60, 130]} />
+
+      <ambientLight intensity={0.4} />
+      <hemisphereLight args={['#ffffff', '#111111', 0.5]} />
+      <directionalLight position={[20, 15, 10]} intensity={0.9} />
+      <directionalLight position={[-15, 10, -15]} intensity={0.3} />
+
+      {/* Environment map — gives metallic surfaces realistic reflections, zero perf cost */}
+      <Environment preset="night" />
 
       <Hangar />
+
+      {/* Soft contact shadows under aircraft — cheaper than shadow maps */}
+      <ContactShadows
+        position={[0, 0.02, 0]}
+        opacity={0.5}
+        scale={80}
+        blur={2}
+        far={10}
+        resolution={512}
+      />
 
       {placedAircraft.map(a => (
         <Aircraft key={a.uid} aircraft={a} dragOffset={dragOffset} />
@@ -95,7 +111,6 @@ function Scene() {
 export default function HangarScene() {
   return (
     <Canvas
-      shadows
       camera={{ position: [40, 30, 40], fov: 50 }}
       gl={{ antialias: true }}
       style={{ display: 'block', width: '100%', height: '100%' }}

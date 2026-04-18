@@ -124,7 +124,7 @@ export default function AddAircraftModal({ onClose, onSaved, editSpec = null }) 
         <FIELD label="Tail Height (ft) *"  name="tailHeight"    value={fields.tailHeight}    onChange={set} />
         <FIELD label="Fuselage Width (ft)" name="fuselageWidth" value={fields.fuselageWidth} onChange={set} />
         <FIELD label="Wing Type"           name="wingType"      value={fields.wingType}      onChange={set}
-          options={[{ value: 'low', label: 'Low-wing' }, { value: 'high', label: 'High-wing' }, { value: 'rotor', label: 'Rotor (helicopter)' }]}
+          options={[{ value: 'high', label: 'High-wing' }, { value: 'mid', label: 'Mid-wing' }, { value: 'low', label: 'Low-wing' }]}
         />
         <FIELD label="Wing Height (ft)"    name="wingRootHeight" value={fields.wingRootHeight} onChange={set} />
         <FIELD label="Wing Thickness (ft)" name="wingThickness"  value={fields.wingThickness}  onChange={set} />

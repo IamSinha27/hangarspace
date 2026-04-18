@@ -13,7 +13,8 @@ class RoofType(str, enum.Enum):
 
 class WingType(str, enum.Enum):
     high = "high"
-    low = "low"
+    mid  = "mid"
+    low  = "low"
 
 
 class Org(Base):

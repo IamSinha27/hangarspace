@@ -52,7 +52,7 @@ export default function Profile() {
       <div style={{ borderBottom: '1px solid #1e293b', padding: '0 40px', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#0a0f1e' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{ width: 28, height: 28, background: 'linear-gradient(135deg, #3b82f6, #6366f1)', borderRadius: 6 }} />
-          <span style={{ color: '#f1f5f9', fontWeight: 700, fontSize: 17 }}>HangarSpace</span>
+          <span style={{ color: '#f1f5f9', fontWeight: 700, fontSize: 17 }}>Hangarspace</span>
         </div>
         <button onClick={() => navigate('/dashboard')}
           style={{ background: '#0f172a', border: '1px solid #334155', borderRadius: 6, color: '#94a3b8', fontSize: 13, padding: '6px 14px', cursor: 'pointer' }}

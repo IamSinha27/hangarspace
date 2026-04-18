@@ -50,7 +50,7 @@ export default function Login() {
         {/* Logo */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 48 }}>
           <div style={{ width: 32, height: 32, background: 'linear-gradient(135deg, #3b82f6, #6366f1)', borderRadius: 8 }} />
-          <span style={{ color: '#f1f5f9', fontWeight: 700, fontSize: 18 }}>HangarSpace</span>
+          <span style={{ color: '#f1f5f9', fontWeight: 700, fontSize: 18 }}>Hangarspace</span>
         </div>
 
         <h1 style={{ margin: '0 0 8px', fontSize: 28, fontWeight: 700, color: '#f1f5f9', letterSpacing: '-0.5px' }}>

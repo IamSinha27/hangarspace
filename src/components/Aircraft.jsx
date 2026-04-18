@@ -15,7 +15,7 @@ function getColors(uid, selected, collisions, wingCollisions, heightViolations, 
   return { body: '#60a5fa', wing: '#93c5fd', edge: '#334155' }
 }
 
-export default function Aircraft({ aircraft }) {
+export default function Aircraft({ aircraft, dragOffset }) {
   const { uid, specId, x, z, rotation } = aircraft
 
   const spec = useStore(s => s.specs.find(sp => sp.id === specId))
@@ -28,6 +28,7 @@ export default function Aircraft({ aircraft }) {
   const selectAircraft = useStore(s => s.selectAircraft)
   const removeAircraft = useStore(s => s.removeAircraft)
   const setDragging = useStore(s => s.setDragging)
+  const locked = useStore(s => s.locked)
 
   const isSelected = selected === uid
   const hasCollision = collisions.has(uid)
@@ -37,6 +38,8 @@ export default function Aircraft({ aircraft }) {
   const hasAnyIssue = hasCollision || hasHeightViolation || hasBoundaryViolation
 
   const colors = getColors(uid, selected, collisions, wingCollisions, heightViolations, boundaryViolations)
+
+  if (!spec) return null
 
   const {
     length, wingspan, tailHeight,
@@ -66,8 +69,10 @@ export default function Aircraft({ aircraft }) {
   }, [length, tailHeight, fuselageWidth])
 
   const onPointerDown = (e) => {
+    if (locked) return
     e.stopPropagation()
     selectAircraft(uid)
+    dragOffset.current = { x: e.point.x - x, z: e.point.z - z }
     setDragging(true)
   }
 

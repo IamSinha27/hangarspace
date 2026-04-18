@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useStore } from '../store/useStore'
+import { addFleetSpec, updateFleetSpec } from '../api/hangar'
 
 const FT_TO_M = 0.3048
 const M_TO_FT = 3.28084
@@ -56,7 +57,7 @@ const DEFAULTS = {
   elevatorSpan: '0',
 }
 
-export default function AddAircraftModal({ onClose, editSpec = null }) {
+export default function AddAircraftModal({ onClose, onSaved, editSpec = null }) {
   const addCustomSpec = useStore(s => s.addCustomSpec)
   const updateSpec    = useStore(s => s.updateSpec)
   const [fields, setFields] = useState(editSpec ? specToFields(editSpec) : DEFAULTS)
@@ -65,7 +66,7 @@ export default function AddAircraftModal({ onClose, editSpec = null }) {
   const isEdit = editSpec !== null
   const set = (name, value) => setFields(f => ({ ...f, [name]: value }))
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!fields.name.trim()) return setError('Name is required')
     if (!fields.length || !fields.wingspan || !fields.tailHeight) return setError('Length, Wingspan and Tail Height are required')
 
@@ -82,9 +83,21 @@ export default function AddAircraftModal({ onClose, editSpec = null }) {
     }
 
     if (isEdit) {
-      updateSpec(editSpec.id, parsed)
+      try {
+        const saved = await updateFleetSpec(editSpec.id, parsed)
+        updateSpec(editSpec.id, saved)
+        onSaved?.(saved)
+      } catch (e) {
+        return setError(e.message)
+      }
     } else {
-      addCustomSpec({ id: slugify(fields.name) + '_custom_' + Date.now(), ...parsed })
+      try {
+        const saved = await addFleetSpec(parsed)
+        addCustomSpec(saved)
+        onSaved?.(saved)
+      } catch (e) {
+        return setError(e.message)
+      }
     }
     onClose()
   }
@@ -130,11 +143,6 @@ export default function AddAircraftModal({ onClose, editSpec = null }) {
           }}>{isEdit ? 'Save Changes' : 'Add Aircraft'}</button>
         </div>
 
-        {!isEdit && (
-          <div style={{ color: '#334155', fontSize: 10, marginTop: 10, textAlign: 'center' }}>
-            Session only — not saved on refresh
-          </div>
-        )}
       </div>
     </div>
   )

@@ -23,3 +23,9 @@ dist-ssr
 *.sln
 *.sw?
 .vercel
+
+# Python
+backend/venv/
+backend/.env
+__pycache__/
+*.pyc

@@ -23,6 +23,7 @@ function recheck(state, overrides = {}) {
 
 export const useStore = create((set, get) => ({
   hangar: HANGAR,
+  hangarName: '',
   roof: DEFAULT_ROOF,
   buffer: DEFAULT_BUFFER,
   specs: [],
@@ -36,6 +37,11 @@ export const useStore = create((set, get) => ({
   heightViolations: new Set(),
   boundaryViolations: new Set(),
   dragging: false,
+  locked: false,
+
+  setHangarName: (hangarName) => set({ hangarName }),
+
+  toggleLocked: () => set(state => ({ locked: !state.locked, selected: null })),
 
   setHangar: (hangar) => set(state => ({
     hangar,
@@ -45,8 +51,9 @@ export const useStore = create((set, get) => ({
   initFleet: (specs) => set({ specs, fleetReady: true, fleetError: null }),
   setFleetError: (msg) => set({ fleetError: msg, fleetReady: false }),
 
-  // Add a custom aircraft spec (session-only until backend arrives)
   addCustomSpec: (spec) => set(state => ({ specs: [...state.specs, spec] })),
+
+  removeSpec: (id) => set(state => ({ specs: state.specs.filter(s => s.id !== id) })),
 
   // Update an existing spec by id, then recheck collisions
   updateSpec: (id, updated) => set(state => {
@@ -107,6 +114,17 @@ export const useStore = create((set, get) => ({
     const newAircraft = { uid, specId: state.clipboard.specId, x: 2, z: 2, rotation: state.clipboard.rotation }
     const placed = [...state.placedAircraft, newAircraft]
     return { placedAircraft: placed, selected: uid, ...recheck(state, { placedAircraft: placed }) }
+  }),
+
+  loadPlaced: (placedFromApi) => set(state => {
+    const placed = placedFromApi.map((p, i) => ({
+      uid: `aircraft_${i}`,
+      specId: p.spec_id,
+      x: p.x_m,
+      z: p.z_m,
+      rotation: p.rotation_rad,
+    }))
+    return { placedAircraft: placed, ...checkCollisions(placed, state.buffer, state.specs, state.hangar, state.roof) }
   }),
 
   clearHangar: () => set({

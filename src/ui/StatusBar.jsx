@@ -1,7 +1,7 @@
 import { useStore } from '../store/useStore'
 import { useState } from 'react'
 
-export default function StatusBar() {
+export default function StatusBar({ onBack }) {
   const [showConfirm, setShowConfirm] = useState(false)
   const clearHangar = useStore(s => s.clearHangar)
   const placedAircraft = useStore(s => s.placedAircraft)
@@ -10,6 +10,8 @@ export default function StatusBar() {
   const heightViolations = useStore(s => s.heightViolations)
   const boundaryViolations = useStore(s => s.boundaryViolations)
   const dragging = useStore(s => s.dragging)
+  const locked = useStore(s => s.locked)
+  const toggleLocked = useStore(s => s.toggleLocked)
 
   const hasHardIssues = collisions.size > 0 || heightViolations.size > 0 || boundaryViolations.size > 0
   const hasWingIssues = wingCollisions.size > 0
@@ -26,6 +28,12 @@ export default function StatusBar() {
       fontSize: 12,
       flexShrink: 0,
     }}>
+      {onBack && (
+        <button onClick={onBack} style={{ background: '#0f172a', border: '1px solid #334155', borderRadius: 5, color: '#94a3b8', cursor: 'pointer', fontSize: 12, padding: '3px 10px', fontWeight: 500 }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = '#475569'; e.currentTarget.style.color = '#e2e8f0' }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = '#334155'; e.currentTarget.style.color = '#94a3b8' }}
+        >Dashboard</button>
+      )}
       <span style={{ color: '#60a5fa', fontWeight: 600 }}>
         {placedAircraft.length} aircraft
       </span>
@@ -62,11 +70,44 @@ export default function StatusBar() {
         <span style={{ color: '#94a3b8' }}>Dragging...</span>
       )}
 
-      <span style={{ marginLeft: 'auto', color: '#64748b', fontSize: 12 }}>
-        Click to select &middot; Drag to move &middot; R to rotate &middot; Del to remove
+      <span style={{ marginLeft: 'auto', color: locked ? '#fbbf24' : '#64748b', fontSize: 12 }}>
+        {locked ? 'Layout locked — unlock to edit' : 'Click to select \u00b7 Drag to move \u00b7 R to rotate \u00b7 Del to remove'}
       </span>
 
-      {placedAircraft.length > 0 && (
+      <button
+        onClick={toggleLocked}
+        title={locked ? 'Unlock layout' : 'Lock layout'}
+        style={{
+          background: locked ? '#1c1917' : 'none',
+          border: `1px solid ${locked ? '#d97706' : '#475569'}`,
+          borderRadius: 4,
+          color: locked ? '#fbbf24' : '#94a3b8',
+          cursor: 'pointer',
+          fontSize: 12,
+          padding: '2px 10px',
+          flexShrink: 0,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 5,
+        }}
+        onMouseEnter={e => { if (!locked) { e.currentTarget.style.borderColor = '#d97706'; e.currentTarget.style.color = '#fbbf24' } }}
+        onMouseLeave={e => { if (!locked) { e.currentTarget.style.borderColor = '#475569'; e.currentTarget.style.color = '#94a3b8' } }}
+      >
+        {locked ? (
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+        ) : (
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 9.9-1"/>
+          </svg>
+        )}
+        {locked ? 'Locked' : 'Lock'}
+      </button>
+
+      {placedAircraft.length > 0 && !locked && (
         <button
           onClick={() => setShowConfirm(true)}
           style={{ background: 'none', border: '1px solid #475569', borderRadius: 4, color: '#94a3b8', cursor: 'pointer', fontSize: 12, padding: '2px 10px', flexShrink: 0 }}

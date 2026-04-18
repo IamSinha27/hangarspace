@@ -1,54 +1,24 @@
-import { useEffect } from 'react'
-import HangarScene from './components/HangarScene'
-import Sidebar from './ui/Sidebar'
-import StatusBar from './ui/StatusBar'
-import { useStore } from './store/useStore'
-import { loadFleetFromExcel } from './data/parseFleet'
+import { Routes, Route, Navigate } from 'react-router-dom'
+import Login from './ui/Login'
+import Dashboard from './pages/Dashboard'
+import Editor from './pages/Editor'
+import Fleet from './pages/Fleet'
+import Profile from './pages/Profile'
+import { getToken } from './api/client'
 
-function FleetLoader({ children }) {
-  const fleetReady = useStore(s => s.fleetReady)
-  const fleetError = useStore(s => s.fleetError)
-  const initFleet  = useStore(s => s.initFleet)
-  const setFleetError = useStore(s => s.setFleetError)
-
-  useEffect(() => {
-    loadFleetFromExcel('/fleet.xlsx')
-      .then(specs => initFleet(specs))
-      .catch(err => setFleetError(err.message))
-  }, [])
-
-  if (fleetError) {
-    return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#020617', color: '#ef4444', flexDirection: 'column', gap: 12 }}>
-        <div style={{ fontSize: 20, fontWeight: 700 }}>Failed to load fleet</div>
-        <div style={{ fontSize: 13, color: '#94a3b8' }}>{fleetError}</div>
-      </div>
-    )
-  }
-
-  if (!fleetReady) {
-    return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#020617', color: '#60a5fa', flexDirection: 'column', gap: 12 }}>
-        <div style={{ fontSize: 16 }}>Loading fleet data...</div>
-      </div>
-    )
-  }
-
-  return children
+function ProtectedRoute({ children }) {
+  return getToken() ? children : <Navigate to="/login" replace />
 }
 
 export default function App() {
   return (
-    <FleetLoader>
-      <div style={{ display: 'flex', flexDirection: 'column', width: '100vw', height: '100vh', background: '#020617', overflow: 'hidden' }}>
-        <StatusBar />
-        <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-          <Sidebar />
-          <div style={{ flex: 1, position: 'relative' }}>
-            <HangarScene />
-          </div>
-        </div>
-      </div>
-    </FleetLoader>
+    <Routes>
+      <Route path="/login" element={<Login />} />
+      <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+      <Route path="/hangars/:id" element={<ProtectedRoute><Editor /></ProtectedRoute>} />
+      <Route path="/fleet" element={<ProtectedRoute><Fleet /></ProtectedRoute>} />
+      <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+    </Routes>
   )
 }

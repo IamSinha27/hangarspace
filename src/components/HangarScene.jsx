@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls } from '@react-three/drei'
 import Hangar from './Hangar'
@@ -16,9 +16,12 @@ function Scene() {
   const copyAircraft = useStore(s => s.copyAircraft)
   const pasteAircraft = useStore(s => s.pasteAircraft)
   const setDragging = useStore(s => s.setDragging)
+  const locked = useStore(s => s.locked)
+
+  const dragOffset = useRef({ x: 0, z: 0 })
 
   const handleMove = useCallback((x, z) => {
-    if (selected) moveAircraft(selected, x, z)
+    if (selected) moveAircraft(selected, x - dragOffset.current.x, z - dragOffset.current.z)
   }, [selected, moveAircraft])
 
   const handleUp = useCallback(() => {
@@ -28,6 +31,7 @@ function Scene() {
   // Keyboard shortcuts for selected aircraft
   useEffect(() => {
     const onKey = (e) => {
+      if (locked) return
       const cmd = e.metaKey || e.ctrlKey
       if (cmd && e.key === 'c' && selected) { copyAircraft(selected); return }
       if (cmd && e.key === 'v') { pasteAircraft(); return }
@@ -37,7 +41,7 @@ function Scene() {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [selected, rotateAircraft, removeAircraft, copyAircraft, pasteAircraft])
+  }, [selected, locked, rotateAircraft, removeAircraft, copyAircraft, pasteAircraft])
 
   return (
     <>
@@ -49,7 +53,7 @@ function Scene() {
       <Hangar />
 
       {placedAircraft.map(a => (
-        <Aircraft key={a.uid} aircraft={a} />
+        <Aircraft key={a.uid} aircraft={a} dragOffset={dragOffset} />
       ))}
 
       <FloorPlane onMove={handleMove} onUp={handleUp} />

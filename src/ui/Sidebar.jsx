@@ -1,12 +1,14 @@
 import { useState } from 'react'
 import { useStore } from '../store/useStore'
 import AddAircraftModal from './AddAircraftModal'
+import { saveLayout, deleteFleetSpec, updateHangar, deleteHangar } from '../api/hangar'
+import ConfirmDialog from './ConfirmDialog'
 
 const M_TO_FT = 3.28084
 function toFt(m) { return (m * M_TO_FT).toFixed(1) }
 function toDeg(rad) { return Math.round((rad * 180) / Math.PI) }
 
-export default function Sidebar() {
+export default function Sidebar({ hangarId, onHangarDeleted }) {
   const specs = useStore(s => s.specs)
   const placedAircraft = useStore(s => s.placedAircraft)
   const selected = useStore(s => s.selected)
@@ -24,10 +26,37 @@ export default function Sidebar() {
   const setRoof = useStore(s => s.setRoof)
   const setHangar = useStore(s => s.setHangar)
   const selectAircraft = useStore(s => s.selectAircraft)
+  const removeSpec = useStore(s => s.removeSpec)
+  const hangarName = useStore(s => s.hangarName)
+  const locked = useStore(s => s.locked)
 
+  const setHangarName = useStore(s => s.setHangarName)
 
   const [showModal, setShowModal] = useState(false)
   const [editSpec, setEditSpec] = useState(null)
+  const [saving, setSaving] = useState(false)
+  const [saveMsg, setSaveMsg] = useState(null)
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [editingName, setEditingName] = useState(false)
+  const [nameInput, setNameInput] = useState('')
+
+  async function handleSave() {
+    if (!hangarId) return
+    setSaving(true)
+    setSaveMsg(null)
+    try {
+      await Promise.all([
+        saveLayout(hangarId, placedAircraft),
+        updateHangar(hangarId, { ...hangar, name: hangarName }, roof, buffer),
+      ])
+      setSaveMsg('Saved')
+    } catch {
+      setSaveMsg('Save failed')
+    } finally {
+      setSaving(false)
+      setTimeout(() => setSaveMsg(null), 2000)
+    }
+  }
 
   return (
     <div style={{
@@ -41,8 +70,26 @@ export default function Sidebar() {
     }}>
       {/* Header */}
       <div style={{ padding: '16px', borderBottom: '1px solid #1e293b' }}>
-        <div style={{ color: '#60a5fa', fontWeight: 700, fontSize: 16, marginBottom: 4 }}>HangarSpace</div>
-        <div style={{ color: '#64748b', fontSize: 12 }}>3D Parking Optimizer</div>
+        <div style={{ color: '#475569', fontSize: 10, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 }}>Hangar</div>
+        {editingName ? (
+          <input
+            autoFocus
+            value={nameInput}
+            onChange={e => setNameInput(e.target.value)}
+            onBlur={() => { if (nameInput.trim()) setHangarName(nameInput.trim()); setEditingName(false) }}
+            onKeyDown={e => { if (e.key === 'Enter') { if (nameInput.trim()) setHangarName(nameInput.trim()); setEditingName(false) } if (e.key === 'Escape') setEditingName(false) }}
+            style={{ width: '100%', background: '#1e293b', border: '1px solid #3b82f6', borderRadius: 5, color: '#f1f5f9', fontSize: 15, fontWeight: 700, padding: '4px 8px', boxSizing: 'border-box', outline: 'none' }}
+          />
+        ) : (
+          <div
+            onClick={() => { setNameInput(hangarName); setEditingName(true) }}
+            title="Click to rename"
+            style={{ color: '#f1f5f9', fontWeight: 700, fontSize: 15, cursor: 'text', display: 'flex', alignItems: 'center', gap: 6 }}
+          >
+            <span>{hangarName || 'Unnamed Hangar'}</span>
+            <span className="edit-icon" style={{ color: '#475569', fontSize: 11 }}>✎</span>
+          </div>
+        )}
       </div>
 
       {/* Stats */}
@@ -118,19 +165,21 @@ export default function Sidebar() {
       {/* Add aircraft */}
       <div style={{ padding: '12px 16px 0', borderBottom: '1px solid #1e293b', display: 'flex', flexDirection: 'column' }}>
         <div style={{ color: '#94a3b8', fontSize: 11, marginBottom: 8, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, flexShrink: 0 }}>
-          Add Aircraft
+          Add Aircraft{locked && <span style={{ color: '#d97706', marginLeft: 6, fontWeight: 400, textTransform: 'none' }}>— locked</span>}
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingBottom: 4 }}>
           {specs.map(spec => (
             <div key={spec.id} style={{ display: 'flex', gap: 4, alignItems: 'stretch' }}>
               <button
-                onClick={() => addAircraft(spec.id)}
+                onClick={() => !locked && addAircraft(spec.id)}
+                disabled={locked}
                 style={{
                   flex: 1, background: '#1e293b', border: '1px solid #334155', borderRadius: 6,
-                  padding: '8px 10px', cursor: 'pointer', textAlign: 'left',
+                  padding: '8px 10px', cursor: locked ? 'not-allowed' : 'pointer', textAlign: 'left',
+                  opacity: locked ? 0.4 : 1,
                 }}
-                onMouseEnter={e => e.currentTarget.style.borderColor = '#3b82f6'}
-                onMouseLeave={e => e.currentTarget.style.borderColor = '#334155'}
+                onMouseEnter={e => { if (!locked) e.currentTarget.style.borderColor = '#3b82f6' }}
+                onMouseLeave={e => { if (!locked) e.currentTarget.style.borderColor = '#334155' }}
               >
                 <div style={{ color: '#e2e8f0', fontSize: 13, fontWeight: 600 }}>{spec.name}</div>
                 <div style={{ color: '#64748b', fontSize: 11, marginTop: 2 }}>
@@ -141,26 +190,35 @@ export default function Sidebar() {
               <button
                 onClick={() => { selectAircraft(null); setEditSpec(spec) }}
                 title="Edit spec"
-                style={{
-                  background: '#1e293b', border: '1px solid #334155', borderRadius: 6,
-                  color: '#475569', cursor: 'pointer', fontSize: 12, padding: '0 8px', flexShrink: 0,
-                }}
+                style={{ background: '#1e293b', border: '1px solid #334155', borderRadius: 6, color: '#475569', cursor: 'pointer', fontSize: 12, padding: '0 8px', flexShrink: 0 }}
                 onMouseEnter={e => { e.currentTarget.style.borderColor = '#3b82f6'; e.currentTarget.style.color = '#60a5fa' }}
                 onMouseLeave={e => { e.currentTarget.style.borderColor = '#334155'; e.currentTarget.style.color = '#475569' }}
               >✎</button>
+              <button
+                onClick={async () => {
+                  if (!confirm(`Remove ${spec.name} from fleet?`)) return
+                  await deleteFleetSpec(spec.id)
+                  removeSpec(spec.id)
+                }}
+                title="Delete spec"
+                style={{ background: '#1e293b', border: '1px solid #334155', borderRadius: 6, color: '#475569', cursor: 'pointer', fontSize: 14, padding: '0 7px', flexShrink: 0 }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = '#ef4444'; e.currentTarget.style.color = '#ef4444' }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = '#334155'; e.currentTarget.style.color = '#475569' }}
+              >×</button>
             </div>
           ))}
 
           {/* Custom aircraft button */}
           <button
-            onClick={() => { selectAircraft(null); setShowModal(true) }}
+            onClick={() => { if (locked) return; selectAircraft(null); setShowModal(true) }}
+            disabled={locked}
             style={{
               background: 'none', border: '1px dashed #334155', borderRadius: 6,
-              padding: '8px 10px', cursor: 'pointer', textAlign: 'center',
-              color: '#475569', fontSize: 12, marginTop: 2,
+              padding: '8px 10px', cursor: locked ? 'not-allowed' : 'pointer', textAlign: 'center',
+              color: '#475569', fontSize: 12, marginTop: 2, opacity: locked ? 0.4 : 1,
             }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = '#3b82f6'; e.currentTarget.style.color = '#60a5fa' }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = '#334155'; e.currentTarget.style.color = '#475569' }}
+            onMouseEnter={e => { if (!locked) { e.currentTarget.style.borderColor = '#3b82f6'; e.currentTarget.style.color = '#60a5fa' } }}
+            onMouseLeave={e => { if (!locked) { e.currentTarget.style.borderColor = '#334155'; e.currentTarget.style.color = '#475569' } }}
           >
             ＋ Custom Aircraft
           </button>
@@ -210,28 +268,33 @@ export default function Sidebar() {
                   <div style={{ display: 'flex', gap: 4 }}>
                     {/* Rotate button */}
                     <button
-                      onClick={() => rotateAircraft(a.uid)}
-                      title="Rotate 45° (or press R)"
+                      onClick={() => !locked && rotateAircraft(a.uid)}
+                      title={locked ? 'Unlock to rotate' : 'Rotate 45° (or press R)'}
+                      disabled={locked}
                       style={{
                         background: 'none', border: '1px solid #334155', borderRadius: 4,
-                        color: '#60a5fa', cursor: 'pointer', fontSize: 12,
-                        padding: '1px 5px', lineHeight: 1.4,
+                        color: locked ? '#334155' : '#60a5fa',
+                        cursor: locked ? 'not-allowed' : 'pointer',
+                        fontSize: 12, padding: '1px 5px', lineHeight: 1.4,
                       }}
-                      onMouseEnter={e => e.currentTarget.style.borderColor = '#3b82f6'}
-                      onMouseLeave={e => e.currentTarget.style.borderColor = '#334155'}
+                      onMouseEnter={e => { if (!locked) e.currentTarget.style.borderColor = '#3b82f6' }}
+                      onMouseLeave={e => { if (!locked) e.currentTarget.style.borderColor = '#334155' }}
                     >
                       ↺
                     </button>
                     {/* Remove button */}
                     <button
-                      onClick={() => removeAircraft(a.uid)}
-                      title="Remove"
+                      onClick={() => !locked && removeAircraft(a.uid)}
+                      title={locked ? 'Unlock to remove' : 'Remove'}
+                      disabled={locked}
                       style={{
                         background: 'none', border: 'none',
-                        color: '#475569', cursor: 'pointer', fontSize: 14, lineHeight: 1, padding: '0 2px',
+                        color: locked ? '#334155' : '#475569',
+                        cursor: locked ? 'not-allowed' : 'pointer',
+                        fontSize: 14, lineHeight: 1, padding: '0 2px',
                       }}
-                      onMouseEnter={e => e.currentTarget.style.color = '#ef4444'}
-                      onMouseLeave={e => e.currentTarget.style.color = '#475569'}
+                      onMouseEnter={e => { if (!locked) e.currentTarget.style.color = '#ef4444' }}
+                      onMouseLeave={e => { if (!locked) e.currentTarget.style.color = '#475569' }}
                     >
                       ×
                     </button>
@@ -247,9 +310,35 @@ export default function Sidebar() {
       </div>
 
       {/* Footer */}
-      <div style={{ padding: '10px 16px', borderTop: '1px solid #1e293b' }}>
-        <span style={{ color: '#64748b', fontSize: 12 }}>Hangar: 100′ × 136′ × 28′</span>
+      <div style={{ padding: '10px 16px', borderTop: '1px solid #1e293b', display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <button
+            onClick={handleSave} disabled={saving || !hangarId}
+            style={{ flex: 1, background: '#3b82f6', border: 'none', borderRadius: 6, color: '#fff', padding: '8px', fontSize: 13, fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1 }}
+          >
+            {saving ? 'Saving...' : 'Save Layout'}
+          </button>
+          {saveMsg && <span style={{ color: saveMsg === 'Saved' ? '#22c55e' : '#ef4444', fontSize: 12 }}>{saveMsg}</span>}
+        </div>
+        <button
+          onClick={() => setConfirmDelete(true)}
+          style={{ width: '100%', background: 'none', border: '1px solid #334155', borderRadius: 6, color: '#64748b', padding: '7px', fontSize: 12, cursor: 'pointer' }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = '#ef4444'; e.currentTarget.style.color = '#f87171' }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = '#334155'; e.currentTarget.style.color = '#64748b' }}
+        >
+          Delete Hangar
+        </button>
       </div>
+
+      {confirmDelete && (
+        <ConfirmDialog
+          title="Delete Hangar"
+          message="This will permanently delete this hangar and all its layouts and aircraft placements. This cannot be undone."
+          confirmLabel="Delete Hangar"
+          onConfirm={async () => { await deleteHangar(hangarId); onHangarDeleted() }}
+          onCancel={() => setConfirmDelete(false)}
+        />
+      )}
     </div>
   )
 }

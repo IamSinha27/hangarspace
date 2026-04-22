@@ -222,7 +222,7 @@ export default function Dashboard() {
                   <button key={value} type="button"
                     onClick={() => {
                       if (value === 't-shaped') {
-                        setForm(f => ({ ...f, shape: 't-shaped', length_m: T_DIMS.length_m, width_m: T_DIMS.width_m }))
+                        setForm(f => ({ ...f, shape: 't-shaped', length_m: T_DIMS.length_m, width_m: T_DIMS.width_m, roof_type: 'flat' }))
                       } else {
                         setForm(f => ({ ...f, shape: 'rectangular', length_m: DEFAULT_FORM.length_m, width_m: DEFAULT_FORM.width_m }))
                       }
@@ -245,7 +245,9 @@ export default function Dashboard() {
 
             <div>
               <div style={{ color: '#94a3b8', fontSize: 12, marginBottom: 6, fontWeight: 500 }}>Roof Type</div>
-              <div style={{ display: 'flex', gap: 8 }}>
+              {form.shape === 't-shaped' ? (
+                <div style={{ color: '#475569', fontSize: 11 }}>Fixed: Flat roof (blueprint)</div>
+              ) : <div style={{ display: 'flex', gap: 8 }}>
                 {['flat', 'gabled', 'arched'].map(type => (
                   <button key={type} type="button"
                     onClick={() => setForm(f => ({ ...f, roof_type: type }))}

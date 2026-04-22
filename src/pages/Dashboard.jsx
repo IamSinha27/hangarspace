@@ -247,15 +247,17 @@ export default function Dashboard() {
               <div style={{ color: '#94a3b8', fontSize: 12, marginBottom: 6, fontWeight: 500 }}>Roof Type</div>
               {form.shape === 't-shaped' ? (
                 <div style={{ color: '#475569', fontSize: 11 }}>Fixed: Flat roof (blueprint)</div>
-              ) : <div style={{ display: 'flex', gap: 8 }}>
-                {['flat', 'gabled', 'arched'].map(type => (
-                  <button key={type} type="button"
-                    onClick={() => setForm(f => ({ ...f, roof_type: type }))}
-                    style={{ flex: 1, padding: '8px 0', borderRadius: 6, fontSize: 12, fontWeight: 500, cursor: 'pointer', textTransform: 'capitalize', border: form.roof_type === type ? '1px solid #3b82f6' : '1px solid #334155', background: form.roof_type === type ? '#1e3a5f' : '#1e293b', color: form.roof_type === type ? '#60a5fa' : '#64748b' }}>
-                    {type}
-                  </button>
-                ))}
-              </div>
+              ) : (
+                <div style={{ display: 'flex', gap: 8 }}>
+                  {['flat', 'gabled', 'arched'].map(type => (
+                    <button key={type} type="button"
+                      onClick={() => setForm(f => ({ ...f, roof_type: type }))}
+                      style={{ flex: 1, padding: '8px 0', borderRadius: 6, fontSize: 12, fontWeight: 500, cursor: 'pointer', textTransform: 'capitalize', border: form.roof_type === type ? '1px solid #3b82f6' : '1px solid #334155', background: form.roof_type === type ? '#1e3a5f' : '#1e293b', color: form.roof_type === type ? '#60a5fa' : '#64748b' }}>
+                      {type}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>

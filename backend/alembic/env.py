@@ -20,8 +20,13 @@ if config.config_file_name is not None:
 target_metadata = Base.metadata
 
 
+def _get_url():
+    url = os.getenv("DATABASE_URL", "")
+    return url.replace("postgresql://", "postgresql+asyncpg://", 1)
+
+
 def run_migrations_offline() -> None:
-    url = os.getenv("DATABASE_URL")
+    url = _get_url()
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -33,7 +38,7 @@ def run_migrations_offline() -> None:
 
 
 def run_migrations_online() -> None:
-    url = os.getenv("DATABASE_URL")
+    url = _get_url()
     connectable = create_async_engine(url, poolclass=pool.NullPool)
 
     import asyncio

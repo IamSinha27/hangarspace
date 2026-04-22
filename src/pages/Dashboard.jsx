@@ -7,8 +7,11 @@ import ConfirmDialog from '../ui/ConfirmDialog'
 const M_TO_FT = 3.28084
 const toFt = m => (m * M_TO_FT).toFixed(0)
 
+const T_DIMS = { length_m: 19.48, width_m: 10.97 }
+
 const DEFAULT_FORM = {
   name: '',
+  shape: 'rectangular',
   length_m: 30.48,
   width_m: 41.45,
   height_m: 8.53,
@@ -209,9 +212,34 @@ export default function Dashboard() {
 
             <Field label="Hangar Name" value={form.name} onChange={v => setForm(f => ({ ...f, name: v }))} required placeholder="e.g. North Hangar" />
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
-              <Field label="Length (ft)" type="number" value={toFt(form.length_m)} onChange={v => setForm(f => ({ ...f, length_m: v / M_TO_FT }))} />
-              <Field label="Width (ft)" type="number" value={toFt(form.width_m)} onChange={v => setForm(f => ({ ...f, width_m: v / M_TO_FT }))} />
+            <div>
+              <div style={{ color: '#94a3b8', fontSize: 12, marginBottom: 6, fontWeight: 500 }}>Hangar Shape</div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                {[
+                  { value: 'rectangular', label: 'Rectangular' },
+                  { value: 't-shaped', label: 'T-Shaped (Big T)' },
+                ].map(({ value, label }) => (
+                  <button key={value} type="button"
+                    onClick={() => {
+                      if (value === 't-shaped') {
+                        setForm(f => ({ ...f, shape: 't-shaped', length_m: T_DIMS.length_m, width_m: T_DIMS.width_m }))
+                      } else {
+                        setForm(f => ({ ...f, shape: 'rectangular', length_m: DEFAULT_FORM.length_m, width_m: DEFAULT_FORM.width_m }))
+                      }
+                    }}
+                    style={{ flex: 1, padding: '8px 0', borderRadius: 6, fontSize: 12, fontWeight: 500, cursor: 'pointer', border: form.shape === value ? '1px solid #3b82f6' : '1px solid #334155', background: form.shape === value ? '#1e3a5f' : '#1e293b', color: form.shape === value ? '#60a5fa' : '#64748b' }}>
+                    {label}
+                  </button>
+                ))}
+              </div>
+              {form.shape === 't-shaped' && (
+                <div style={{ color: '#475569', fontSize: 11, marginTop: 5 }}>Fixed blueprint: 63′ × 36′ — dimensions locked</div>
+              )}
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, opacity: form.shape === 't-shaped' ? 0.5 : 1 }}>
+              <Field label="Length (ft)" type="number" value={toFt(form.length_m)} onChange={v => setForm(f => ({ ...f, length_m: v / M_TO_FT }))} disabled={form.shape === 't-shaped'} />
+              <Field label="Width (ft)" type="number" value={toFt(form.width_m)} onChange={v => setForm(f => ({ ...f, width_m: v / M_TO_FT }))} disabled={form.shape === 't-shaped'} />
               <Field label="Height (ft)" type="number" value={toFt(form.height_m)} onChange={v => setForm(f => ({ ...f, height_m: v / M_TO_FT }))} />
             </div>
 
@@ -323,14 +351,14 @@ function HangarCard({ hangar, onOpen, onDelete, onRename }) {
   )
 }
 
-function Field({ label, value, onChange, type = 'text', required, placeholder }) {
+function Field({ label, value, onChange, type = 'text', required, placeholder, disabled }) {
   return (
     <div>
       <div style={{ color: '#94a3b8', fontSize: 12, marginBottom: 5, fontWeight: 500 }}>{label}</div>
-      <input type={type} value={value} required={required} placeholder={placeholder}
+      <input type={type} value={value} required={required} placeholder={placeholder} disabled={disabled}
         onChange={e => onChange(e.target.value)}
-        style={{ width: '100%', background: '#1e293b', border: '1px solid #334155', borderRadius: 6, color: '#e2e8f0', padding: '9px 10px', fontSize: 13, boxSizing: 'border-box', outline: 'none' }}
-        onFocus={e => e.target.style.borderColor = '#3b82f6'}
+        style={{ width: '100%', background: '#1e293b', border: '1px solid #334155', borderRadius: 6, color: disabled ? '#475569' : '#e2e8f0', padding: '9px 10px', fontSize: 13, boxSizing: 'border-box', outline: 'none', cursor: disabled ? 'not-allowed' : 'text' }}
+        onFocus={e => { if (!disabled) e.target.style.borderColor = '#3b82f6' }}
         onBlur={e => e.target.style.borderColor = '#334155'}
       />
     </div>

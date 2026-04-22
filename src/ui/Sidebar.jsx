@@ -33,6 +33,8 @@ export default function Sidebar({ hangarId, onHangarDeleted }) {
   const locked = useStore(s => s.locked)
 
   const setHangarName = useStore(s => s.setHangarName)
+  const hangarShape = useStore(s => s.hangarShape)
+  const setHangarShape = useStore(s => s.setHangarShape)
   const setLayoutSaveMsg = useStore(s => s.setLayoutSaveMsg)
   const setConfigSaveMsg = useStore(s => s.setConfigSaveMsg)
 
@@ -75,7 +77,7 @@ export default function Sidebar({ hangarId, onHangarDeleted }) {
     setConfigSaveMsg('Unsaved')
     configTimer.current = setTimeout(async () => {
       try {
-        await updateHangar(hangarId, { ...hangar, name: hangarName }, roof, buffer, doorWall)
+        await updateHangar(hangarId, { ...hangar, name: hangarName }, roof, buffer, doorWall, hangarShape)
         setConfigSaveMsg('Settings saved')
       } catch {
         setConfigSaveMsg('Save failed')
@@ -83,7 +85,7 @@ export default function Sidebar({ hangarId, onHangarDeleted }) {
         setTimeout(() => setConfigSaveMsg(null), 2000)
       }
     }, 3000)
-  }, [hangar, roof, buffer, doorWall, hangarName])
+  }, [hangar, roof, buffer, doorWall, hangarName, hangarShape])
 
   return (
     <div style={{
@@ -159,10 +161,25 @@ export default function Sidebar({ hangarId, onHangarDeleted }) {
         />
       </div>
 
+      {/* Hangar shape */}
+      <div style={{ padding: '12px 16px', borderBottom: '1px solid #1e293b', flexShrink: 0 }}>
+        <div style={{ color: '#94a3b8', fontSize: 11, marginBottom: 6, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1 }}>Hangar Shape</div>
+        <select
+          value={hangarShape}
+          onChange={e => setHangarShape(e.target.value)}
+          style={{ width: '100%', background: '#1e293b', border: '1px solid #334155', borderRadius: 4, color: '#e2e8f0', padding: '5px 8px', fontSize: 12 }}
+        >
+          <option value="rectangular">Rectangular</option>
+          <option value="t-shaped">T-Shaped (Big T)</option>
+        </select>
+      </div>
+
       {/* Hangar dimensions */}
       <div style={{ padding: '12px 16px', borderBottom: '1px solid #1e293b', flexShrink: 0 }}>
         <div style={{ color: '#94a3b8', fontSize: 11, marginBottom: 8, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1 }}>Hangar Dimensions</div>
-        {[
+        {hangarShape === 't-shaped' ? (
+          <div style={{ color: '#475569', fontSize: 11 }}>Fixed: 63′11″ × 36′0″ (Big T blueprint)</div>
+        ) : [
           { label: 'Length', key: 'length', min: 15, max: 100 },
           { label: 'Width',  key: 'width',  min: 15, max: 100 },
         ].map(({ label, key, min, max }) => (
@@ -181,45 +198,53 @@ export default function Sidebar({ hangarId, onHangarDeleted }) {
       {/* Door wall */}
       <div style={{ padding: '12px 16px', borderBottom: '1px solid #1e293b', flexShrink: 0 }}>
         <div style={{ color: '#94a3b8', fontSize: 11, marginBottom: 6, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1 }}>Entrance</div>
-        <select
-          value={doorWall}
-          onChange={e => setDoorWall(e.target.value)}
-          style={{ width: '100%', background: '#1e293b', border: '1px solid #334155', borderRadius: 4, color: '#e2e8f0', padding: '5px 8px', fontSize: 12 }}
-        >
-          <option value="south">South wall</option>
-          <option value="north">North wall</option>
-          <option value="east">East wall</option>
-          <option value="west">West wall</option>
-        </select>
+        {hangarShape === 't-shaped' ? (
+          <div style={{ color: '#475569', fontSize: 11 }}>Fixed: South wall — 41′11″ opening (blueprint)</div>
+        ) : (
+          <select
+            value={doorWall}
+            onChange={e => setDoorWall(e.target.value)}
+            style={{ width: '100%', background: '#1e293b', border: '1px solid #334155', borderRadius: 4, color: '#e2e8f0', padding: '5px 8px', fontSize: 12 }}
+          >
+            <option value="south">South wall</option>
+            <option value="north">North wall</option>
+            <option value="east">East wall</option>
+            <option value="west">West wall</option>
+          </select>
+        )}
       </div>
 
       {/* Roof profile */}
       <div style={{ padding: '12px 16px', borderBottom: '1px solid #1e293b', flexShrink: 0 }}>
         <div style={{ color: '#94a3b8', fontSize: 11, marginBottom: 8, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1 }}>Roof Profile</div>
-        <select
-          value={roof.type}
-          onChange={e => setRoof({ ...roof, type: e.target.value })}
-          style={{ width: '100%', background: '#1e293b', border: '1px solid #334155', borderRadius: 4, color: '#e2e8f0', padding: '5px 8px', fontSize: 12, marginBottom: 8 }}
-        >
-          <option value="flat">Flat</option>
-          <option value="gabled">Gabled (ridge center)</option>
-          <option value="arched">Arched</option>
-        </select>
-        <div style={{ color: '#94a3b8', fontSize: 11, marginBottom: 4 }}>
-          Peak height: {toFt(roof.peakHeight)}ft
-        </div>
-        <input type="range" min={4} max={12} step={0.1} value={roof.peakHeight}
-          onChange={e => setRoof({ ...roof, peakHeight: parseFloat(e.target.value) })}
-          style={{ width: '100%', accentColor: '#3b82f6', marginBottom: 6 }}
-        />
-        {roof.type !== 'flat' && (<>
+        {hangarShape === 't-shaped' ? (
+          <div style={{ color: '#475569', fontSize: 11 }}>Fixed: Flat roof (blueprint)</div>
+        ) : (<>
+          <select
+            value={roof.type}
+            onChange={e => setRoof({ ...roof, type: e.target.value })}
+            style={{ width: '100%', background: '#1e293b', border: '1px solid #334155', borderRadius: 4, color: '#e2e8f0', padding: '5px 8px', fontSize: 12, marginBottom: 8 }}
+          >
+            <option value="flat">Flat</option>
+            <option value="gabled">Gabled (ridge center)</option>
+            <option value="arched">Arched</option>
+          </select>
           <div style={{ color: '#94a3b8', fontSize: 11, marginBottom: 4 }}>
-            Eave height: {toFt(roof.eaveHeight)}ft
+            Peak height: {toFt(roof.peakHeight)}ft
           </div>
-          <input type="range" min={2} max={roof.peakHeight - 0.5} step={0.1} value={roof.eaveHeight}
-            onChange={e => setRoof({ ...roof, eaveHeight: parseFloat(e.target.value) })}
-            style={{ width: '100%', accentColor: '#3b82f6' }}
+          <input type="range" min={4} max={12} step={0.1} value={roof.peakHeight}
+            onChange={e => setRoof({ ...roof, peakHeight: parseFloat(e.target.value) })}
+            style={{ width: '100%', accentColor: '#3b82f6', marginBottom: 6 }}
           />
+          {roof.type !== 'flat' && (<>
+            <div style={{ color: '#94a3b8', fontSize: 11, marginBottom: 4 }}>
+              Eave height: {toFt(roof.eaveHeight)}ft
+            </div>
+            <input type="range" min={2} max={roof.peakHeight - 0.5} step={0.1} value={roof.eaveHeight}
+              onChange={e => setRoof({ ...roof, eaveHeight: parseFloat(e.target.value) })}
+              style={{ width: '100%', accentColor: '#3b82f6' }}
+            />
+          </>)}
         </>)}
       </div>
 

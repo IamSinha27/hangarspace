@@ -11,6 +11,11 @@ class RoofType(str, enum.Enum):
     arched = "arched"
 
 
+class HangarShape(str, enum.Enum):
+    rectangular = "rectangular"
+    t_shaped = "t-shaped"
+
+
 class WingType(str, enum.Enum):
     high = "high"
     mid  = "mid"
@@ -76,6 +81,7 @@ class Hangar(Base):
     roof_eave_height_m = Column(Float, nullable=False)
     buffer_m = Column(Float, nullable=False, default=0.9144)
     door_wall = Column(String, nullable=False, server_default='south')
+    shape = Column(String, nullable=False, server_default='rectangular')
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     org = relationship("Org", back_populates="hangars")

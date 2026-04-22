@@ -15,10 +15,11 @@ const ROTATE_STEP = Math.PI / 4
 let uidCounter = 0
 
 function recheck(state, overrides = {}) {
-  const placed  = overrides.placedAircraft ?? state.placedAircraft
-  const buffer  = overrides.buffer  ?? state.buffer
-  const roof    = overrides.roof    ?? state.roof
-  return checkCollisions(placed, buffer, state.specs, state.hangar, roof)
+  const placed      = overrides.placedAircraft ?? state.placedAircraft
+  const buffer      = overrides.buffer  ?? state.buffer
+  const roof        = overrides.roof    ?? state.roof
+  const hangarShape = overrides.hangarShape ?? state.hangarShape
+  return checkCollisions(placed, buffer, state.specs, state.hangar, roof, hangarShape)
 }
 
 export const useStore = create((set, get) => ({
@@ -39,11 +40,20 @@ export const useStore = create((set, get) => ({
   dragging: false,
   locked: false,
   doorWall: 'south', // 'north' | 'south' | 'east' | 'west'
+  hangarShape: 'rectangular', // 'rectangular' | 't-shaped'
   layoutSaveMsg: null,
   configSaveMsg: null,
 
   setHangarName: (hangarName) => set({ hangarName }),
   setDoorWall: (doorWall) => set({ doorWall }),
+  setHangarShape: (hangarShape) => set(state => ({
+    hangarShape,
+    ...(hangarShape === 't-shaped' ? {
+      doorWall: 'south',
+      roof: { ...state.roof, type: 'flat', peakHeight: state.roof.peakHeight },
+    } : {}),
+    ...recheck(state, { hangarShape }),
+  })),
   setLayoutSaveMsg: (msg) => set({ layoutSaveMsg: msg }),
   setConfigSaveMsg: (msg) => set({ configSaveMsg: msg }),
 

@@ -90,10 +90,122 @@ function doorStripProps(wall, length, width) {
   }
 }
 
+// ─── Big T Hangar ─────────────────────────────────────────────────────────────
+const T_DOOR_WIDTH = 12.776  // 41′11″ per blueprint
+const T_DOOR_CX    = -9.74 + T_DOOR_WIDTH / 2  // starts at west wall → center at -3.352m
+
+const T = {
+  hL: 9.74, hW: 5.485, zInner: -1.145,
+  stemXMin: -5.07, stemXMax: 6.62,
+  outerLen: 19.48, outerWid: 10.97,
+  topBarDepth: 4.34, stemWidth: 11.69, stemDepth: 6.63,
+  stemCX: 0.775, topBarCZ: -3.315, stemCZ: 2.17,
+}
+
+function TWallFill({ x, z, w, d, wallHeight }) {
+  return (
+    <mesh position={[x, wallHeight / 2, z]}>
+      <boxGeometry args={[w, wallHeight, d]} />
+      <meshStandardMaterial color="#1a1a1a" opacity={0.08} transparent side={THREE.BackSide} />
+    </mesh>
+  )
+}
+
+function TWallEdge({ x, z, w, d, wallHeight }) {
+  const geo = useMemo(() => new THREE.EdgesGeometry(new THREE.BoxGeometry(w, wallHeight, d)), [w, d, wallHeight])
+  return (
+    <lineSegments position={[x, wallHeight / 2, z]} geometry={geo}>
+      <lineBasicMaterial color="#555555" opacity={0.7} transparent />
+    </lineSegments>
+  )
+}
+
+function THangar({ wallHeight }) {
+  const doorWall = useStore(s => s.doorWall)
+  const walls = [
+    // [cx, cz, width, depth]
+    [0,          -T.hW,      T.outerLen,   0.2],  // south wall (door)
+    [T.hL,       T.topBarCZ, 0.2,          T.topBarDepth], // right outer
+    [8.18,       T.zInner,   3.12,         0.2],  // right step
+    [T.stemXMax, T.stemCZ,   0.2,          T.stemDepth],   // right stem
+    [T.stemCX,   T.hW,       T.stemWidth,  0.2],  // north wall
+    [T.stemXMin, T.stemCZ,   0.2,          T.stemDepth],   // left stem
+    [-7.405,     T.zInner,   4.67,         0.2],  // left step
+    [-T.hL,      T.topBarCZ, 0.2,          T.topBarDepth], // left outer
+  ]
+
+  return (
+    <group>
+      {/* Floor — top bar */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, T.topBarCZ]} receiveShadow>
+        <planeGeometry args={[T.outerLen, T.topBarDepth]} />
+        <meshStandardMaterial color="#0a0a0a" />
+      </mesh>
+      {/* Floor — stem */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[T.stemCX, 0, T.stemCZ]} receiveShadow>
+        <planeGeometry args={[T.stemWidth, T.stemDepth]} />
+        <meshStandardMaterial color="#0a0a0a" />
+      </mesh>
+
+      {/* Grid — top bar */}
+      <Grid position={[0, 0.01, T.topBarCZ]} args={[T.outerLen, T.topBarDepth]}
+        cellSize={1} cellThickness={0.4} cellColor="#242424"
+        sectionSize={5} sectionThickness={0.8} sectionColor="#3d3d3d"
+        fadeDistance={80} fadeStrength={1} infiniteGrid={false} />
+      {/* Grid — stem */}
+      <Grid position={[T.stemCX, 0.01, T.stemCZ]} args={[T.stemWidth, T.stemDepth]}
+        cellSize={1} cellThickness={0.4} cellColor="#242424"
+        sectionSize={5} sectionThickness={0.8} sectionColor="#3d3d3d"
+        fadeDistance={80} fadeStrength={1} infiniteGrid={false} />
+
+      {/* Door strip — south wall: 41′11″ wide, flush with west wall per blueprint */}
+      <mesh position={[T_DOOR_CX, 0.01, -T.hW]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[T_DOOR_WIDTH, 1.2]} />
+        <meshStandardMaterial color="#22c55e" opacity={0.35} transparent emissive="#22c55e" emissiveIntensity={0.4} />
+      </mesh>
+
+      {/* Walls */}
+      {walls.map(([x, z, w, d], i) => (
+        <group key={i}>
+          <TWallFill x={x} z={z} w={w} d={d} wallHeight={wallHeight} />
+          <TWallEdge x={x} z={z} w={w} d={d} wallHeight={wallHeight} />
+        </group>
+      ))}
+
+      {/* Ceiling lights */}
+      {[-3, 0, 3].map((ox, i) => (
+        <mesh key={`tl-${i}`} position={[ox, wallHeight - 0.05, T.topBarCZ]} rotation={[Math.PI / 2, 0, 0]}>
+          <planeGeometry args={[T.outerLen * 0.15, T.topBarDepth * 0.1]} />
+          <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={2} toneMapped={false} />
+        </mesh>
+      ))}
+      <mesh position={[T.stemCX, wallHeight - 0.05, T.stemCZ]} rotation={[Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[T.stemWidth * 0.3, T.stemDepth * 0.08]} />
+        <meshStandardMaterial color="#ffffff" emissive="#ffffff" emissiveIntensity={2} toneMapped={false} />
+      </mesh>
+
+      {/* Compass labels */}
+      {[
+        { label: 'S', pos: [0,       0.5, -T.hW - 2],     door: true },
+        { label: 'N', pos: [T.stemCX, 0.5,  T.hW + 2],    door: false },
+        { label: 'E', pos: [T.hL + 2, 0.5,  T.topBarCZ],  door: false },
+        { label: 'W', pos: [-T.hL - 2, 0.5, T.topBarCZ],  door: false },
+      ].map(({ label, pos, door }) => (
+        <Html key={label} position={pos} center style={{ pointerEvents: 'none' }}>
+          <div style={{ color: door ? '#22c55e' : '#334155', fontWeight: 700, fontSize: 13, fontFamily: 'monospace', userSelect: 'none' }}>
+            {label}{door ? ' ⬆' : ''}
+          </div>
+        </Html>
+      ))}
+    </group>
+  )
+}
+
 export default function Hangar() {
   const { length, width } = useStore(s => s.hangar)
   const roof = useStore(s => s.roof)
   const doorWall = useStore(s => s.doorWall)
+  const hangarShape = useStore(s => s.hangarShape)
 
   const { type, peakHeight, eaveHeight } = roof
   const wallHeight = type === 'flat' ? peakHeight : eaveHeight
@@ -109,6 +221,10 @@ export default function Hangar() {
   const roofEdges = useMemo(() => {
     return roofGeo ? new THREE.EdgesGeometry(roofGeo) : null
   }, [roofGeo])
+
+  if (hangarShape === 't-shaped') {
+    return <THangar wallHeight={wallHeight} />
+  }
 
   return (
     <group>

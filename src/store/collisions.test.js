@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { satOBB, yRangesOverlap, rotatedExtents, checkCollisions, getCeilingHeight } from './collisions.js'
+import { satOBB, yRangesOverlap, rotatedExtents, checkCollisions, getCeilingHeight, isInsideTHangar } from './collisions.js'
 
 // ─── Test fixtures ─────────────────────────────────────────────────────────────
 
@@ -428,5 +428,48 @@ describe('elevator collisions', () => {
     const result = checkCollisions(placed, BUFFER, SPECS_ELEV, HANGAR, FLAT_ROOF)
     expect(result.wingCollisions.size).toBe(0)
     expect(result.collisions.size).toBe(0)
+  })
+})
+
+// ─── T-hangar boundary ─────────────────────────────────────────────────────────
+
+const T_HANGAR = { length: 19.48, width: 10.97, height: 8.53 }
+
+// Small spec that fits comfortably inside T-hangar zones (wingspan 2m, length 4m)
+const SMALL = {
+  id: 'small',
+  length: 4.0, wingspan: 2.0, tailHeight: 1.5,
+  fuselageWidth: 0.5, wingRootHeight: 0.5, wingThickness: 0.15,
+  elevatorSpan: 0,
+}
+const T_SPECS = [...SPECS, SMALL]
+
+describe('T-hangar boundary violations', () => {
+  it('flags aircraft in the left notch (outside T polygon)', () => {
+    // Left notch: x ≈ -7 is outside stem (stemXMin = -5.07)
+    const placed = [aircraft('t1', 'small', -7, 3)]
+    const result = checkCollisions(placed, BUFFER, T_SPECS, T_HANGAR, FLAT_ROOF, 't-shaped')
+    expect(result.boundaryViolations.has('t1')).toBe(true)
+  })
+
+  it('flags aircraft in the right notch (outside T polygon)', () => {
+    // Right notch: x ≈ 8 is outside stem (stemXMax = 6.62)
+    const placed = [aircraft('t2', 'small', 8, 3)]
+    const result = checkCollisions(placed, BUFFER, T_SPECS, T_HANGAR, FLAT_ROOF, 't-shaped')
+    expect(result.boundaryViolations.has('t2')).toBe(true)
+  })
+
+  it('does NOT flag small aircraft in the top bar', () => {
+    // Top bar center — SMALL fits within the 4.34m depth
+    const placed = [aircraft('t3', 'small', 0, -3)]
+    const result = checkCollisions(placed, BUFFER, T_SPECS, T_HANGAR, FLAT_ROOF, 't-shaped')
+    expect(result.boundaryViolations.has('t3')).toBe(false)
+  })
+
+  it('does NOT flag small aircraft in the stem', () => {
+    // Stem center — well inside Rect B
+    const placed = [aircraft('t4', 'small', 0, 2)]
+    const result = checkCollisions(placed, BUFFER, T_SPECS, T_HANGAR, FLAT_ROOF, 't-shaped')
+    expect(result.boundaryViolations.has('t4')).toBe(false)
   })
 })

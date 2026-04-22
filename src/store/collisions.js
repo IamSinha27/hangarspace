@@ -46,6 +46,32 @@ export function rotatedExtents(hL, hW, rot) {
   }
 }
 
+// T-hangar fixed blueprint dimensions (Big T Hangar)
+const T_HL = 9.74        // half outer length (63'11")
+const T_HW = 5.485       // half outer width  (36'0")
+const T_Z_INNER = -1.145 // z where top bar meets stem (-hW + 14'3")
+const T_STEM_X_MIN = -5.07  // stem left edge  (-hL + 15'4")
+const T_STEM_X_MAX = 6.62   // stem right edge (+hL - 10'3")
+
+// Returns true if the aircraft OBB (all 4 corners) fits inside the T-hangar polygon,
+// with each outer wall shrunken inward by `buffer`.
+export function isInsideTHangar(ax, az, hL, hW, rot, buffer) {
+  const cos = Math.cos(rot), sin = Math.sin(rot)
+  const corners = [
+    [ax + hL * cos - hW * sin, az + hL * sin + hW * cos],
+    [ax + hL * cos + hW * sin, az + hL * sin - hW * cos],
+    [ax - hL * cos - hW * sin, az - hL * sin + hW * cos],
+    [ax - hL * cos + hW * sin, az - hL * sin - hW * cos],
+  ]
+  // Two rectangles forming the T, each outer wall shrunk by buffer
+  const A = { xMin: -T_HL + buffer, xMax: T_HL - buffer, zMin: -T_HW + buffer, zMax: T_Z_INNER }
+  const B = { xMin: T_STEM_X_MIN + buffer, xMax: T_STEM_X_MAX - buffer, zMin: T_Z_INNER, zMax: T_HW - buffer }
+  return corners.every(([cx, cz]) =>
+    (cx >= A.xMin && cx <= A.xMax && cz >= A.zMin && cz <= A.zMax) ||
+    (cx >= B.xMin && cx <= B.xMax && cz >= B.zMin && cz <= B.zMax)
+  )
+}
+
 // Returns the ceiling height (meters) at a given XZ position based on roof profile.
 // Swap this function's internals when LiDAR heightmap is available — callers unchanged.
 export function getCeilingHeight(x, z, roof, hangar) {
@@ -77,7 +103,7 @@ function elevCenter(ax, az, length, rot) {
 
 // Main collision check — runs every time aircraft move.
 // Returns four Sets: collisions, wingCollisions, heightViolations, boundaryViolations.
-export function checkCollisions(placedAircraft, buffer, specs, hangar, roof) {
+export function checkCollisions(placedAircraft, buffer, specs, hangar, roof, hangarShape = 'rectangular') {
   const collisions = new Set()
   const wingCollisions = new Set()
   const heightViolations = new Set()
@@ -98,15 +124,21 @@ export function checkCollisions(placedAircraft, buffer, specs, hangar, roof) {
       heightViolations.add(a.uid)
     }
 
-    // Boundary check: use wingspan (widest extent) as the bounding footprint
-    const ext = rotatedExtents(sA.length / 2, sA.wingspan / 2, rotA)
-    if (
-      a.x - ext.x < -hHalfL ||
-      a.x + ext.x >  hHalfL ||
-      a.z - ext.z < -hHalfW ||
-      a.z + ext.z >  hHalfW
-    ) {
-      boundaryViolations.add(a.uid)
+    // Boundary check
+    if (hangarShape === 't-shaped') {
+      if (!isInsideTHangar(a.x, a.z, sA.length / 2, sA.wingspan / 2, rotA, buffer)) {
+        boundaryViolations.add(a.uid)
+      }
+    } else {
+      const ext = rotatedExtents(sA.length / 2, sA.wingspan / 2, rotA)
+      if (
+        a.x - ext.x < -hHalfL ||
+        a.x + ext.x >  hHalfL ||
+        a.z - ext.z < -hHalfW ||
+        a.z + ext.z >  hHalfW
+      ) {
+        boundaryViolations.add(a.uid)
+      }
     }
 
     for (let j = i + 1; j < placedAircraft.length; j++) {

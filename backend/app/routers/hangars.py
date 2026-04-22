@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from typing import Optional
 
 from ..database import get_db
-from ..models import Hangar, Layout, PlacedAircraft, RoofType
+from ..models import Hangar, HangarShape, Layout, PlacedAircraft, RoofType
 from ..auth.dependencies import get_current_user
 from ..models import User
 
@@ -23,6 +23,7 @@ class HangarCreate(BaseModel):
     roof_eave_height_m: float
     buffer_m: float = 0.9144
     door_wall: str = 'south'
+    shape: HangarShape = HangarShape.rectangular
 
 
 class HangarUpdate(BaseModel):
@@ -35,6 +36,7 @@ class HangarUpdate(BaseModel):
     roof_eave_height_m: Optional[float] = None
     buffer_m: Optional[float] = None
     door_wall: Optional[str] = None
+    shape: Optional[HangarShape] = None
 
 
 class PlacedAircraftIn(BaseModel):
@@ -101,6 +103,7 @@ async def get_hangar(
         "roof_eave_height_m": hangar.roof_eave_height_m,
         "buffer_m": hangar.buffer_m,
         "door_wall": hangar.door_wall,
+        "shape": hangar.shape,
         "layout_id": active_layout.id if active_layout else None,
         "placed_aircraft": [
             {

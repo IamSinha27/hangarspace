@@ -49,11 +49,6 @@ app.include_router(hangars.router)
 app.include_router(fleet.router)
 
 
-@app.get("/")
-async def root():
-    return {"status": "alive", "message": "Cron job received"}
-
-
 @app.get("/health")
 async def health():
     return {"status": "ok"}

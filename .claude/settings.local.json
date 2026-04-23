@@ -13,7 +13,22 @@
       "Bash(npm test:*)",
       "Bash(python3:*)",
       "Bash(pip3 install:*)",
-      "Bash(vercel:*)"
+      "Bash(vercel:*)",
+      "Bash(backend/venv/bin/pip install *)",
+      "Bash(npm list *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "WebSearch",
+      "WebFetch(domain:www.airplx.com)",
+      "WebFetch(domain:www.staxplanes.com)",
+      "WebFetch(domain:1mileup.com)",
+      "WebFetch(domain:hangarstack.com)",
+      "WebFetch(domain:www.fyveby.com)",
+      "WebFetch(domain:hangarlogic.com)",
+      "Bash(git checkout *)",
+      "Bash(npx vite *)",
+      "Bash(lsof *)"
     ]
   }
 }
